@@ -14,7 +14,7 @@
     exit(EXIT_FAILURE); \
   } while (0)
 
-int32_t stackpos;
+int32_t stackpos = 0;
 uint8_t stack[STACK_MAX];
 void push(uint8_t data) {
   if (stackpos + 1 >= STACK_MAX) {
@@ -27,7 +27,7 @@ uint8_t pop() {
   if (stackpos - 1 < 0) {
     FATAL("stack underflow\n");
   }
-  return (stack[stackpos--]);
+  return (stack[--stackpos]);
 }
 
 // parse until we hit a closing parentheses
@@ -90,6 +90,18 @@ void parseNumber(FILE* stream) {
 void parse(FILE* stream);
 
 
+void print() {
+  printf("%d\n", pop());
+}
+
+void repeat() {
+  uint8_t count = pop(); //the number of times to repeat this
+  uint8_t num = pop(); //the val to be repeated
+  for(uint8_t i = 0; i < count; i++) {
+    push(num);
+  }
+}
+
 void evalif() {
   if (pop()) {
     size_t size;
@@ -122,6 +134,10 @@ void parseFunction(FILE* stream) {
   // Now eval function
   if (!strcmp(functionBuf, "evalif")) {
     evalif();
+  } else if (!strcmp(functionBuf, "print")) {
+    print();
+  } else if(!strcmp(functionBuf, "repeat")) {
+    repeat();
   } else {
     FILE* fp = fopen(functionBuf, "r");
     parse(fp);
