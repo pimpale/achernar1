@@ -17,6 +17,7 @@
 
 size_t stackpos = 0;
 uint8_t stack[STACK_MAX];
+
 void push(uint8_t data) {
   if (stackpos == STACK_MAX) {
     FATAL("stack overflow");
@@ -111,6 +112,17 @@ void parse(FILE* stream);
 
 void print() { printf("%d\n", pop()); }
 
+void printstr() {
+    // allocate buffer to store string
+    size_t size;
+    popData(&size, sizeof(size_t));
+    uint8_t* strbuf = malloc(size+1);
+    popData(strbuf, size+1);
+    pop();  // pop leading null byte
+    printf("%s", strbuf);
+    free(strbuf);
+}
+
 void repeat() {
   uint8_t count = pop();  // the number of times to repeat this
   uint8_t num = pop();    // the val to be repeated
@@ -124,13 +136,9 @@ void evalif() {
     // allocate buffer to store string
     size_t size;
     popData(&size, sizeof(size_t));
-    uint8_t* strbuf = malloc(size);
-    pop();  // pop initial null byte
-    size_t i = size - 1;
-    uint8_t c;
-    while ((c = pop()) != 0) {  // copy data
-      strbuf[i--] = c;
-    }
+    uint8_t* strbuf = malloc(size+1);
+    popData(strbuf, size+1);
+    pop();  // pop leading null byte
     FILE* stream = fmemopen(strbuf, size, "r");
     parse(stream);
     fclose(stream);
@@ -153,6 +161,8 @@ void parseFunction(FILE* stream) {
   // Now eval function
   if (!strcmp(functionBuf, "evalif")) {
     evalif();
+  } else if (!strcmp(functionBuf, "printstr")) {
+    printstr();
   } else if (!strcmp(functionBuf, "print")) {
     print();
   } else if (!strcmp(functionBuf, "repeat")) {
