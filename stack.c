@@ -51,11 +51,10 @@ void parseString(FILE* stream) {
   if (getc(stream) != '(') {
     FATAL("malformed string literal");
   }
-
   push(0);  // signal beginning
   int32_t c;
   uint32_t depth = 1;
-  uint32_t strlength = 0;
+  uint32_t strlength = 1;
   while ((c = getc(stream)) != EOF) {
     if (strlength == UINT32_MAX) {
       FATAL("string literal out of bounds");
@@ -67,24 +66,20 @@ void parseString(FILE* stream) {
     } else if (c == '(') {
       depth++;
       push((uint8_t)c);
-      strlength++;
     } else if (c == ')') {
       depth--;
       if (depth == 0) {
         break;
       } else {
         push((uint8_t)c);
-        strlength++;
       }
     } else {
       push((uint8_t)c);
-      strlength++;
     }
+    strlength++;
   }
-  // signal end
-  push(0);
-  // push strlength (as an int)
-  pushData(&strlength, sizeof(size_t));
+  push(0);                               // signal end
+  pushData(&strlength, sizeof(size_t));  // push strlength (as an int)
 }
 
 // parse until space encountered, then push number.
@@ -110,17 +105,15 @@ void parseNumber(FILE* stream) {
 
 void parse(FILE* stream);
 
-void print() { printf("%d\n", pop()); }
-
 void printstr() {
-    // allocate buffer to store string
-    size_t size;
-    popData(&size, sizeof(size_t));
-    uint8_t* strbuf = malloc(size+1);
-    popData(strbuf, size+1);
-    pop();  // pop leading null byte
-    printf("%s", strbuf);
-    free(strbuf);
+  // allocate buffer to store string
+  size_t size;
+  popData(&size, sizeof(size_t));
+  uint8_t* strbuf = malloc(size);
+  popData(strbuf, size);
+  pop();  // pop leading null byte
+  printf("%s", strbuf);
+  free(strbuf);
 }
 
 void repeat() {
@@ -136,8 +129,8 @@ void evalif() {
     // allocate buffer to store string
     size_t size;
     popData(&size, sizeof(size_t));
-    uint8_t* strbuf = malloc(size+1);
-    popData(strbuf, size+1);
+    uint8_t* strbuf = malloc(size);
+    popData(strbuf, size);
     pop();  // pop leading null byte
     FILE* stream = fmemopen(strbuf, size, "r");
     parse(stream);
@@ -163,8 +156,6 @@ void parseFunction(FILE* stream) {
     evalif();
   } else if (!strcmp(functionBuf, "printstr")) {
     printstr();
-  } else if (!strcmp(functionBuf, "print")) {
-    print();
   } else if (!strcmp(functionBuf, "repeat")) {
     repeat();
   } else {
