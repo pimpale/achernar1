@@ -1,4 +1,5 @@
 #include <ctype.h>
+#include <errno.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,36 +15,50 @@
     exit(EXIT_FAILURE); \
   } while (0)
 
-int32_t stackpos = 0;
+size_t stackpos = 0;
 uint8_t stack[STACK_MAX];
 void push(uint8_t data) {
-  if (stackpos + 1 >= STACK_MAX) {
-    FATAL("stack overflow\n");
+  if (stackpos == STACK_MAX) {
+    FATAL("stack overflow");
   }
   stack[stackpos++] = data;
 }
 
 uint8_t pop() {
-  if (stackpos - 1 < 0) {
-    FATAL("stack underflow\n");
+  if (stackpos == 0) {
+    FATAL("stack underflow");
   }
   return (stack[--stackpos]);
 }
 
-// parse until we hit a closing parentheses
-// String format is defined here:
-// one byte in each word
-// followed by a string length
+void pushData(void* data, size_t len) {
+  if (stackpos + len >= STACK_MAX) {
+    FATAL("stack overflow");
+  }
+  memmove(&(stack[stackpos]), data, len);
+  stackpos += len;
+}
+
+void popData(void* data, size_t len) {
+  if (stackpos - len < 0) {
+    FATAL("stack underflow");
+  }
+  stackpos -= len;
+  memmove(data, &(stack[stackpos]), len);
+}
 void parseString(FILE* stream) {
   if (getc(stream) != '(') {
     FATAL("malformed string literal");
   }
-  // signal beginning
-  push(0);
+
+  push(0);  // signal beginning
   int32_t c;
   uint32_t depth = 1;
+  uint32_t strlength = 0;
   while ((c = getc(stream)) != EOF) {
-    if (c == '\\') {
+    if (strlength == UINT32_MAX) {
+      FATAL("string literal out of bounds");
+    } else if (c == '\\') {
       c = getc(stream);
       if (c == EOF) {
         break;
@@ -51,19 +66,24 @@ void parseString(FILE* stream) {
     } else if (c == '(') {
       depth++;
       push((uint8_t)c);
+      strlength++;
     } else if (c == ')') {
       depth--;
       if (depth == 0) {
         break;
       } else {
         push((uint8_t)c);
+        strlength++;
       }
     } else {
       push((uint8_t)c);
+      strlength++;
     }
   }
   // signal end
   push(0);
+  // push strlength (as an int)
+  pushData(&strlength, sizeof(size_t));
 }
 
 // parse until space encountered, then push number.
@@ -89,35 +109,34 @@ void parseNumber(FILE* stream) {
 
 void parse(FILE* stream);
 
-
-void print() {
-  printf("%d\n", pop());
-}
+void print() { printf("%d\n", pop()); }
 
 void repeat() {
-  uint8_t count = pop(); //the number of times to repeat this
-  uint8_t num = pop(); //the val to be repeated
-  for(uint8_t i = 0; i < count; i++) {
+  uint8_t count = pop();  // the number of times to repeat this
+  uint8_t num = pop();    // the val to be repeated
+  for (uint8_t i = 0; i < count; i++) {
     push(num);
   }
 }
 
 void evalif() {
   if (pop()) {
+    // allocate buffer to store string
     size_t size;
-    FILE* stream = open_memstream(NULL, &size);
-    pop();  // pop ending zero
-    uint8_t c = 0;
-    while ((c = pop()) != 0) {
-      //write backwards
-      fputc(c,stream);
-      rewind(stream);
+    popData(&size, sizeof(size_t));
+    uint8_t* strbuf = malloc(size);
+    pop();  // pop initial null byte
+    size_t i = size - 1;
+    uint8_t c;
+    while ((c = pop()) != 0) {  // copy data
+      strbuf[i--] = c;
     }
+    FILE* stream = fmemopen(strbuf, size, "r");
     parse(stream);
     fclose(stream);
+    free(strbuf);
   }
 }
-
 
 void parseFunction(FILE* stream) {
   char functionBuf[FUNCTION_NAME_MAX + 1];
@@ -136,7 +155,7 @@ void parseFunction(FILE* stream) {
     evalif();
   } else if (!strcmp(functionBuf, "print")) {
     print();
-  } else if(!strcmp(functionBuf, "repeat")) {
+  } else if (!strcmp(functionBuf, "repeat")) {
     repeat();
   } else {
     FILE* fp = fopen(functionBuf, "r");
