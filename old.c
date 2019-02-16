@@ -12,16 +12,14 @@
 #define NUMERICAL_LITERAL_MAX 3
 #define FUNCTION_NAME_MAX 32
 
-
-
 typedef struct {
-  void* ptr;
-  char* name;
+  void *ptr;
+  char *name;
   size_t len;
 } Variable;
 
 typedef struct {
-  char* func;
+  char *func;
 } Function;
 
 Variable variableTable[VARIABLE_TABLE_MAX];
@@ -30,11 +28,11 @@ Function functionTable[FUNCTION_TABLE_MAX];
 size_t stackpos = 0;
 uint8_t stack[STACK_MAX];
 
-void parseString(FILE* stream) {
+void parseString(FILE *stream) {
   if (getc(stream) != '(') {
     FATAL("malformed string literal");
   }
-  push(0);  // signal beginning
+  push(0); // signal beginning
   int32_t c;
   uint32_t depth = 1;
   uint32_t strlength = 1;
@@ -61,13 +59,13 @@ void parseString(FILE* stream) {
     }
     strlength++;
   }
-  push(0);                               // signal end
-  pushData(&strlength, sizeof(size_t));  // push strlength (as an int)
+  push(0);                              // signal end
+  pushData(&strlength, sizeof(size_t)); // push strlength (as an int)
 }
 
 // parse until space encountered, then push number.
 // Numbers > 255 result in undefined behavior
-void parseNumber(FILE* stream) {
+void parseNumber(FILE *stream) {
   int32_t c;
   size_t numBufPos = 0;
   char numBuf[NUMERICAL_LITERAL_MAX + 1];
@@ -86,24 +84,24 @@ void parseNumber(FILE* stream) {
   push((uint8_t)num);
 }
 
-void parse(FILE* stream);
+void parse(FILE *stream);
 
 void evalif() {
   if (pop()) {
     // allocate buffer to store string
     size_t size;
     popData(&size, sizeof(size_t));
-    uint8_t* strbuf = malloc(size);
+    uint8_t *strbuf = malloc(size);
     popData(strbuf, size);
-    pop();  // pop leading null byte
-    FILE* stream = fmemopen(strbuf, size, "r");
+    pop(); // pop leading null byte
+    FILE *stream = fmemopen(strbuf, size, "r");
     parse(stream);
     fclose(stream);
     free(strbuf);
   }
 }
 
-void parseFunction(FILE* stream) {
+void parseFunction(FILE *stream) {
   char functionBuf[FUNCTION_NAME_MAX + 1];
   size_t len = 0;
   int32_t c;
@@ -123,21 +121,21 @@ void parseFunction(FILE* stream) {
   } else if (!strcmp(functionBuf, "delvar")) {
     repeat();
   } else {
-    FILE* fp = fopen(functionBuf, "r");
+    FILE *fp = fopen(functionBuf, "r");
     parse(fp);
     fclose(fp);
   }
 }
 
 // Parses stream until end
-void parse(FILE* stream) {
+void parse(FILE *stream) {
   int32_t c;
   while ((c = getc(stream)) != EOF) {
     if (!isblank(c) && c != '\n') {
       ungetc(c, stream);
-      if (c == '(' || c == ')') {  // String literal
+      if (c == '(' || c == ')') { // String literal
         parseString(stream);
-      } else if (isdigit(c)) {  // Numerical literal
+      } else if (isdigit(c)) { // Numerical literal
         parseNumber(stream);
       } else {
         parseFunction(stream);
@@ -147,7 +145,7 @@ void parse(FILE* stream) {
 }
 
 int main() {
-  FILE* in = fopen("/dev/stdin", "r");
+  FILE *in = fopen("/dev/stdin", "r");
   parse(in);
   fclose(in);
 }

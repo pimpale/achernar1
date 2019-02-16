@@ -1,8 +1,8 @@
 #include <stdio.h>
 
 #include "map.h"
-#include "stack.h"
 #include "parse.h"
+#include "stack.h"
 
 int main() {
   Stack stack;
