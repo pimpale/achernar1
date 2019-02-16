@@ -12,11 +12,6 @@
 #define NUMERICAL_LITERAL_MAX 3
 #define FUNCTION_NAME_MAX 32
 
-#define FATAL(x)        \
-  do {                  \
-    fprintf(stderr, x); \
-    exit(EXIT_FAILURE); \
-  } while (0)
 
 
 typedef struct {
@@ -35,35 +30,6 @@ Function functionTable[FUNCTION_TABLE_MAX];
 size_t stackpos = 0;
 uint8_t stack[STACK_MAX];
 
-void push(uint8_t data) {
-  if (stackpos == STACK_MAX) {
-    FATAL("stack overflow");
-  }
-  stack[stackpos++] = data;
-}
-
-uint8_t pop() {
-  if (stackpos == 0) {
-    FATAL("stack underflow");
-  }
-  return (stack[--stackpos]);
-}
-
-void pushData(void* data, size_t len) {
-  if (stackpos + len >= STACK_MAX) {
-    FATAL("stack overflow");
-  }
-  memmove(&(stack[stackpos]), data, len);
-  stackpos += len;
-}
-
-void popData(void* data, size_t len) {
-  if (stackpos - len < 0) {
-    FATAL("stack underflow");
-  }
-  stackpos -= len;
-  memmove(data, &(stack[stackpos]), len);
-}
 void parseString(FILE* stream) {
   if (getc(stream) != '(') {
     FATAL("malformed string literal");
