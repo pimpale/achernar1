@@ -5,7 +5,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define VARIABLE_TABLE_MAX 10000
+#define FUNCTION_TABLE_MAX 10000
 #define STACK_MAX 10000
+
 #define NUMERICAL_LITERAL_MAX 3
 #define FUNCTION_NAME_MAX 32
 
@@ -14,6 +17,20 @@
     fprintf(stderr, x); \
     exit(EXIT_FAILURE); \
   } while (0)
+
+
+typedef struct {
+  void* ptr;
+  char* name;
+  size_t len;
+} Variable;
+
+typedef struct {
+  char* func;
+} Function;
+
+Variable variableTable[VARIABLE_TABLE_MAX];
+Function functionTable[FUNCTION_TABLE_MAX];
 
 size_t stackpos = 0;
 uint8_t stack[STACK_MAX];
@@ -105,25 +122,6 @@ void parseNumber(FILE* stream) {
 
 void parse(FILE* stream);
 
-void printstr() {
-  // allocate buffer to store string
-  size_t size;
-  popData(&size, sizeof(size_t));
-  uint8_t* strbuf = malloc(size);
-  popData(strbuf, size);
-  pop();  // pop leading null byte
-  printf("%s", strbuf);
-  free(strbuf);
-}
-
-void repeat() {
-  uint8_t count = pop();  // the number of times to repeat this
-  uint8_t num = pop();    // the val to be repeated
-  for (uint8_t i = 0; i < count; i++) {
-    push(num);
-  }
-}
-
 void evalif() {
   if (pop()) {
     // allocate buffer to store string
@@ -154,9 +152,9 @@ void parseFunction(FILE* stream) {
   // Now eval function
   if (!strcmp(functionBuf, "evalif")) {
     evalif();
-  } else if (!strcmp(functionBuf, "printstr")) {
+  } else if (!strcmp(functionBuf, "mkvar")) {
     printstr();
-  } else if (!strcmp(functionBuf, "repeat")) {
+  } else if (!strcmp(functionBuf, "delvar")) {
     repeat();
   } else {
     FILE* fp = fopen(functionBuf, "r");
