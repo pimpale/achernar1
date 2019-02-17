@@ -3,7 +3,7 @@
 #include "table.h"
 #include "parse.h"
 #include "stack.h"
-#include "functions.h"
+#include "function.h"
 
 int main() {
   Stack stack;

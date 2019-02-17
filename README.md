@@ -19,7 +19,7 @@ Very small stack based language
 
 ``` (hello world)printstr
 ``` This prints hello world.Instead
-    of `"`, `(` and `)` are used to represent strings, and can be nested. The string is pushed onto the stack character by character, with a leading and terminating null byte. printstr is one of a few built in functions defined in functions.h 
+    of `"`, `(` and `)` are used to represent strings, and can be nested. The string is pushed onto the stack character by character, with a leading and terminating null byte. printstr is one of a few built in function defined in function.h 
 
     ## #if statement
 
@@ -61,7 +61,7 @@ Very small stack based language
         - hello -
         world
 ``` within the interactive prompt.It should print out `hello world`
-            .Most forth implementations have a dictionary.With stack
+            .Most forth implementation have a dictionary.With stack
         - lang,
     the
     dictionary is the file system.Most words are defined in terms of other words
