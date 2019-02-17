@@ -19,6 +19,5 @@ typedef struct {
 } Function;
 
 void initPrelude(Table *funtab);
-void freePrelude(Table *funtab);
 
 #endif

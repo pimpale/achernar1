@@ -10,4 +10,7 @@
     exit(EXIT_FAILURE);                                                        \
   } while (0)
 
+#define UNUSED(x) (void)(x)
+  
+
 #endif

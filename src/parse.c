@@ -1,8 +1,6 @@
-#include <ctype.h>
-#include <stdlib.h>
-#include <string.h>
-#include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <ctype.h>
 
 #include "constants.h"
 #include "stack.h"
@@ -104,7 +102,4 @@ void parse(FILE *stream, Stack *stack, Table *funtab, Table *vartab) {
       }
     }
   }
-}
-
-int main() {
 }
