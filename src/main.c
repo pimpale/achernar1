@@ -1,15 +1,14 @@
 #include <stdio.h>
 
-#include "table.h"
+#include "function.h"
 #include "parse.h"
 #include "stack.h"
-#include "function.h"
+#include "table.h"
 
 int main() {
   Stack stack;
   Table funtab;
   Table vartab;
-  
 
   initStack(&stack);
   initTable(&funtab);
