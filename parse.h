@@ -1,4 +1,5 @@
 #ifndef PARSE_H
+
 #define PARSE_H
 
 #include <stdio.h>
@@ -6,17 +7,17 @@
 #include <ctype.h>
 
 #include "constants.h"
-#include "map.h"
+#include "table.h"
 #include "stack.h"
 
 #define FUNCTION_NAME_MAX 10
 #define NUMERICAL_LITERAL_MAX 10
 
-void eval(char *str, Stack *stack, Map *funtab, Map *vartab);
-void parse(FILE *file, Stack *stack, Map *funtab, Map *vartab);
+void eval(char *str, Stack *stack, Table *funtab, Table *vartab);
+void parse(FILE *file, Stack *stack, Table *funtab, Table *vartab);
 void parseString(FILE *stream, Stack *stack);
 void parseNumber(FILE *stream, Stack *stack);
-void parseFunction(FILE *stream, Stack *stack, Map *funtab, Map *vartab);
+void parseFunction(FILE *stream, Stack *stack, Table *funtab, Table *vartab);
 
 
 void parseString(FILE *stream, Stack *stack) {
@@ -75,7 +76,7 @@ void parseNumber(FILE *stream, Stack *stack) {
   push(stack, (uint8_t)num);
 }
 
-void parseFunction(FILE *stream, Stack *stack, Map *funtab, Map *vartab) {
+void parseFunction(FILE *stream, Stack *stack, Table *funtab, Table *vartab) {
   char functionBuf[FUNCTION_NAME_MAX + 1];
   size_t len = 0;
   int32_t c;
@@ -93,14 +94,14 @@ void parseFunction(FILE *stream, Stack *stack, Map *funtab, Map *vartab) {
 }
 
 
-void eval(char *str, Stack *stack, Map *funtab, Map *vartab) {
+void eval(char *str, Stack *stack, Table *funtab, Table *vartab) {
     FILE *stream = fmemopen(str, strlen(str), "r");
     parse(stream, stack, funtab, vartab);
     fclose(stream);
 }
 
 // Parses stream until end
-void parse(FILE *stream, Stack *stack, Map *funtab, Map *vartab) {
+void parse(FILE *stream, Stack *stack, Table *funtab, Table *vartab) {
   int32_t c;
   while ((c = getc(stream)) != EOF) {
     if (!isblank(c) && c != '\n') {

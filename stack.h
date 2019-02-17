@@ -66,7 +66,7 @@ void pushData(Stack *stack, void *data, size_t len) {
 }
 
 void popData(Stack *stack, void *data, size_t len) {
-  if (stack->stackpos - len < 0) {
+  if (len > stack->stackpos) {
     FATAL("stack underflow");
   }
   stack->stackpos -= len;

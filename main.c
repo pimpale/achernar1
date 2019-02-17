@@ -1,21 +1,23 @@
 #include <stdio.h>
 
-#include "map.h"
+#include "table.h"
 #include "parse.h"
 #include "stack.h"
+#include "functions.h"
 
 int main() {
   Stack stack;
-  Map funtab;
-  Map vartab;
+  Table funtab;
+  Table vartab;
+  
 
   initStack(&stack);
-  initMap(&funtab);
-  initMap(&vartab);
+  initTable(&funtab);
+  initTable(&vartab);
 
   parse(stdin, &stack, &funtab, &vartab);
 
   freeStack(&stack);
-  freeMap(&funtab);
-  freeMap(&vartab);
+  freeTable(&funtab);
+  freeTable(&vartab);
 }
