@@ -12,10 +12,9 @@ void parseString(FILE *stream, Stack *stack) {
   if (getc(stream) != '(') {
     FATAL("malformed string literal");
   }
-  push(stack, 0); // signal beginning
   int32_t c;
   uint32_t depth = 1;
-  uint32_t strlength = 1;
+  uint32_t strlength = 0;
   while ((c = getc(stream)) != EOF) {
     if (strlength == UINT32_MAX) {
       FATAL("string literal out of bounds");
@@ -40,6 +39,7 @@ void parseString(FILE *stream, Stack *stack) {
     strlength++;
   }
   push(stack, 0);                              // signal end
+  strlength++;
   pushData(stack, &strlength, sizeof(size_t)); // push strlength
 }
 
@@ -76,8 +76,8 @@ void parseFunction(FILE *stream, Stack *stack, Table *funtab, Table *vartab) {
     }
   }
   functionBuf[len] = '\0';
-  // Now eval function
 
+  // Now eval function
   // TODO make function stuff happen
 }
 

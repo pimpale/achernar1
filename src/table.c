@@ -3,8 +3,8 @@
 
 #include "table.h"
 
-void initMapping(struct Mapping *mapping, void *key, void *value,
-                    size_t keylen, size_t valuelen) {
+void initMapping(struct Mapping *mapping, void *key, void *value, size_t keylen,
+                 size_t valuelen) {
   mapping->keylen = keylen;
   mapping->valuelen = valuelen;
   mapping->key = malloc(keylen);
@@ -79,12 +79,14 @@ void delTable(Table *table, void *key, size_t keylen) {
   }
 }
 
-void getTable(Table *table, void *key, void *value, size_t keylen,
-              size_t *valuelen) {
+void getTable(Table *table, void *key, void *value, size_t keylen, size_t *valuelen) {
   struct Mapping *mapping = table->first;
   while (mapping != NULL) {
-    if (!memcmp(mapping->key, key, mapping->keylen)) {
-      memcpy(value, mapping->value, mapping->valuelen);
+    if (keylen == mapping->keylen &&
+        !memcmp(mapping->key, key, mapping->keylen)) {
+      if (value != NULL) {
+        memcpy(value, mapping->value, mapping->valuelen);
+      }
       *valuelen = mapping->valuelen;
       return;
     }

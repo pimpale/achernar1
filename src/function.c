@@ -2,9 +2,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "constants.h"
 #include "stack.h"
 #include "table.h"
-#include "constants.h"
 
 #include "function.h"
 
@@ -41,15 +41,52 @@ void freeFunction(Function *fun) {
 
 // Variable manipulation function
 void mkvar(Stack *stack, Table *funtab, Table *vartab) {
-  
-}
-void delvar(Stack *stack, Table *funtab, Table *vartab);
-void getvar(Stack *stack, Table *funtab, Table *vartab);
-void putvar(Stack *stack, Table *funtab, Table *vartab);
+  size_t varsize;
+  popData(stack, &varsize, sizeof(varsize));
 
+  char *vardata = malloc(varsize);
+
+  size_t namesize;
+  popData(stack, &namesize, sizeof(namesize));
+  char *name = malloc(namesize);
+  popData(stack, name, namesize);
+
+  putTable(vartab, name, vardata, namesize, varsize);
+  free(name);
+  free(vardata);
+}
+
+void delvar(Stack *stack, Table *funtab, Table *vartab) {
+  size_t namesize;
+  popData(stack, &namesize, sizeof(namesize));
+  char *name = malloc(namesize);
+  popData(stack, name, namesize);
+  delTable(vartab, name, namesize);
+  free(name);
+}
+
+void getvar(Stack *stack, Table *funtab, Table *vartab) {
+  size_t namesize;
+  popData(stack, &namesize, sizeof(namesize));
+  char *name = malloc(namesize);
+  popData(stack, name, namesize);
+
+  size_t varsize;
+  getTable(vartab, name, NULL, namesize, &varsize);
+
+  char* vardata = malloc(varsize);
+  getTable(vartab, name, vardata, namesize, &varsize);
+  pushData(stack, vardata, varsize);
+  free(name);
+  free(vardata);
+}
+void putvar(Stack *stack, Table *funtab, Table *vartab) {
+  //TODO
+}
 // Function manipulation function
 void mkfun(Stack *stack, Table *funtab, Table *vartab);
 void delfun(Stack *stack, Table *funtab, Table *vartab);
+void runfun(Stack *stack, Table *funtab, Table *vartab);
 
 // Looping and conditionals
 void evalif(Stack *stack, Table *funtab, Table *vartab);
@@ -67,15 +104,11 @@ void loop(Stack *stack, Table *funtab, Table *vartab);
     pushData(stack, &ret, sizeof(ret));                                    \
   }
 
-#define MATH_DEFINE_TYPE(type) \
+#define MATH_DEFINE_TYPE(type)       \
   OPERATOR_DEFINE_TYPE(type, add, +) \
   OPERATOR_DEFINE_TYPE(type, sub, -) \
   OPERATOR_DEFINE_TYPE(type, mul, *) \
-  OPERATOR_DEFINE_TYPE(type, div, /) 
-
-MATH_DEFINE_TYPE(uint8_t)
-MATH_DEFINE_TYPE(uint64_t)
-MATH_DEFINE_TYPE(double)
+  OPERATOR_DEFINE_TYPE(type, div, /)
 
 #define NATIVE_FUNCTION_PUT(funName, stringLiteral)                        \
   do {                                                                     \
@@ -91,6 +124,10 @@ MATH_DEFINE_TYPE(double)
     NATIVE_FUNCTION_PUT(add_##type, "/##name"); \
     NATIVE_FUNCTION_PUT(add_##type, "*##name"); \
   } while (0)
+
+MATH_DEFINE_TYPE(uint8_t)
+MATH_DEFINE_TYPE(uint64_t)
+MATH_DEFINE_TYPE(double)
 
 void initPrelude(Table *funtab) {
   MATH_TYPE_PUT(uint8_t, u8);

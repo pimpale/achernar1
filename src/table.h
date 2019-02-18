@@ -29,8 +29,7 @@ void putTable(Table *table, void *key, void *value, size_t keylen,
               size_t valuelen);
 /* Retrieves the value of the table given the key
  * If the value is found, the */
-void getTable(Table *table, void *key, void *value, size_t keylen,
-              size_t *valuelen);
+void getTable(Table *table, void *key, void *value, size_t keylen, size_t *valuelen);
 /* Deletes the Mapping given by key */
 void delTable(Table *table, void *key, size_t keylen);
 
