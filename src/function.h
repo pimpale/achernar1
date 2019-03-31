@@ -4,18 +4,20 @@
 
 #include <stdint.h>
 
-#include "stack.h"
 #include "table.h"
+#include "vector.h"
 
-#define FUNCTION_TYPE_NATIVE 1
-#define FUNCTION_TYPE_FORTH 2
-#define FUNCTION_TYPE_FILESYSTEM 3
+typedef enum {
+  FUNCTION_TYPE_NATIVE,
+  FUNCTION_TYPE_FORTH,
+  FUNCTION_TYPE_FILESYSTEM
+} FunctionType;
 
 typedef struct {
-  void (*nativeFunPointer)(Stack *, Table *, Table *);
+  void (*nativeFunPointer)(Vector *, Table *, Table *);
   char *body;
   FILE *file;
-  uint64_t funType;
+  FunctionType funType;
 } Function;
 
 void initPrelude(Table *funtab);

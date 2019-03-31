@@ -1,22 +1,26 @@
 #include <stdio.h>
 
 #include "function.h"
-#include "parse.h"
-#include "stack.h"
+#include "vector.h"
 #include "table.h"
+#include "parseable.h"
+#include "parse.h"
 
 int main() {
-  Stack stack;
+  Vector vector;
   Table funtab;
   Table vartab;
+  Parseable input;
 
-  initStack(&stack);
+  initVector(&vector);
   initTable(&funtab);
   initTable(&vartab);
+  initParseableFile(&input, stdin);
 
-  parse(stdin, &stack, &funtab, &vartab);
+  parse(&input, &vector, &funtab, &vartab);
 
-  freeStack(&stack);
+  freeParseable(&input);
+  freeVector(&vector);
   freeTable(&funtab);
   freeTable(&vartab);
 }

@@ -3,13 +3,13 @@
 #include <stdlib.h>
 
 #include "constants.h"
-#include "stack.h"
 #include "table.h"
+#include "vector.h"
 
 #include "function.h"
 
 void initNativeFunction(Function *fun,
-                        void (*funPtr)(Stack *, Table *, Table *)) {
+                        void (*funPtr)(Vector *, Table *, Table *)) {
   fun->funType = FUNCTION_TYPE_NATIVE;
   fun->nativeFunPointer = funPtr;
   fun->body = NULL;
@@ -40,7 +40,8 @@ void freeFunction(Function *fun) {
 }
 
 // Variable manipulation function
-void mkvar(Stack *stack, Table *funtab, Table *vartab) {
+void mkvar(Vector *stack, Table *funtab, Table *vartab) {
+  UNUSED(funtab);
   size_t varsize;
   popData(stack, &varsize, sizeof(varsize));
 
@@ -56,7 +57,8 @@ void mkvar(Stack *stack, Table *funtab, Table *vartab) {
   free(vardata);
 }
 
-void delvar(Stack *stack, Table *funtab, Table *vartab) {
+void delvar(Vector *stack, Table *funtab, Table *vartab) {
+  UNUSED(funtab);
   size_t namesize;
   popData(stack, &namesize, sizeof(namesize));
   char *name = malloc(namesize);
@@ -65,7 +67,8 @@ void delvar(Stack *stack, Table *funtab, Table *vartab) {
   free(name);
 }
 
-void getvar(Stack *stack, Table *funtab, Table *vartab) {
+void getvar(Vector *stack, Table *funtab, Table *vartab) {
+  UNUSED(funtab);
   size_t namesize;
   popData(stack, &namesize, sizeof(namesize));
   char *name = malloc(namesize);
@@ -74,34 +77,34 @@ void getvar(Stack *stack, Table *funtab, Table *vartab) {
   size_t varsize;
   getTable(vartab, name, NULL, namesize, &varsize);
 
-  char* vardata = malloc(varsize);
+  char *vardata = malloc(varsize);
   getTable(vartab, name, vardata, namesize, &varsize);
   pushData(stack, vardata, varsize);
   free(name);
   free(vardata);
 }
-void putvar(Stack *stack, Table *funtab, Table *vartab) {
-  //TODO
+void putvar(Vector *stack, Table *funtab, Table *vartab) {
+  // TODO
 }
 // Function manipulation function
-void mkfun(Stack *stack, Table *funtab, Table *vartab);
-void delfun(Stack *stack, Table *funtab, Table *vartab);
-void runfun(Stack *stack, Table *funtab, Table *vartab);
+void mkfun(Vector *stack, Table *funtab, Table *vartab);
+void delfun(Vector *stack, Table *funtab, Table *vartab);
+void runfun(Vector *stack, Table *funtab, Table *vartab);
 
 // Looping and conditionals
-void evalif(Stack *stack, Table *funtab, Table *vartab);
-void loop(Stack *stack, Table *funtab, Table *vartab);
+void evalif(Vector *stack, Table *funtab, Table *vartab);
+void loop(Vector *stack, Table *funtab, Table *vartab);
 
-#define OPERATOR_DEFINE_TYPE(type, operatorName, operator)                 \
-  void operatorName##_##type(Stack *stack, Table *funtab, Table *vartab);  \
-  void operatorName##_##type(Stack *stack, Table *funtab, Table *vartab) { \
-    UNUSED(vartab);                                                        \
-    UNUSED(funtab);                                                        \
-    type arg1, arg2, ret;                                                  \
-    popData(stack, &arg1, sizeof(arg1));                                   \
-    popData(stack, &arg2, sizeof(arg2));                                   \
-    ret = arg1 operator arg2;                                              \
-    pushData(stack, &ret, sizeof(ret));                                    \
+#define OPERATOR_DEFINE_TYPE(type, operatorName, operator)                  \
+  void operatorName##_##type(Vector *stack, Table *funtab, Table *vartab);  \
+  void operatorName##_##type(Vector *stack, Table *funtab, Table *vartab) { \
+    UNUSED(vartab);                                                         \
+    UNUSED(funtab);                                                         \
+    type arg1, arg2, ret;                                                   \
+    popData(stack, &arg1, sizeof(arg1));                                    \
+    popData(stack, &arg2, sizeof(arg2));                                    \
+    ret = arg1 operator arg2;                                               \
+    pushData(stack, &ret, sizeof(ret));                                     \
   }
 
 #define MATH_DEFINE_TYPE(type)       \
@@ -120,9 +123,22 @@ void loop(Stack *stack, Table *funtab, Table *vartab);
 #define MATH_TYPE_PUT(type, name)               \
   do {                                          \
     NATIVE_FUNCTION_PUT(add_##type, "+##name"); \
-    NATIVE_FUNCTION_PUT(add_##type, "-##name"); \
-    NATIVE_FUNCTION_PUT(add_##type, "/##name"); \
-    NATIVE_FUNCTION_PUT(add_##type, "*##name"); \
+    NATIVE_FUNCTION_PUT(sub_##type, "-##name"); \
+    NATIVE_FUNCTION_PUT(div_##type, "/##name"); \
+    NATIVE_FUNCTION_PUT(mul_##type, "*##name"); \
+  } while (0)
+
+#define NATIVE_FUNCTION_DEL(stringLiteral)                  \
+  do {                                                      \
+    delTable(funtab, stringLiteral, strlen(stringLiteral)); \
+  } while (0)
+
+#define MATH_TYPE_DEL(name)         \
+  do {                              \
+    NATIVE_FUNCTION_DEL("+##name"); \
+    NATIVE_FUNCTION_DEL("-##name"); \
+    NATIVE_FUNCTION_DEL("/##name"); \
+    NATIVE_FUNCTION_DEL("*##name"); \
   } while (0)
 
 MATH_DEFINE_TYPE(uint8_t)
@@ -144,4 +160,17 @@ void initPrelude(Table *funtab) {
   NATIVE_FUNCTION_PUT(loop, "loop");
 }
 
-void freePrelude(Table *funtab) {}
+void freePrelude(Table *funtab) {
+  MATH_TYPE_DEL(u8);
+  MATH_TYPE_DEL(u64);
+  MATH_TYPE_DEL(f64);
+
+  NATIVE_FUNCTION_DEL("mkvar");
+  NATIVE_FUNCTION_DEL("delvar");
+  NATIVE_FUNCTION_DEL("getvar");
+  NATIVE_FUNCTION_DEL("putvar");
+  NATIVE_FUNCTION_DEL("mkfun");
+  NATIVE_FUNCTION_DEL("delfun");
+  NATIVE_FUNCTION_DEL("evalif");
+  NATIVE_FUNCTION_DEL("loop");
+}
