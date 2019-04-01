@@ -3,20 +3,19 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include "vector.h"
 
-// TODO make table not a linkedlist
+// TODO make table not an arraylist
 
-struct Mapping {
+typedef struct {
   void *key;
   size_t keylen;
   void *value;
   size_t valuelen;
-
-  struct Mapping *next;
-};
+} Mapping ;
 
 typedef struct {
-  struct Mapping *first;
+  Vector mappings;
 } Table;
 
 /* Initialize the table */

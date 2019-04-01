@@ -23,7 +23,7 @@ void setSizeVector(Vector *vector, size_t size) {
 /* Resizes the vector in order to fit an element of this size in */
 void resizeVector(Vector *vector, size_t size) {
   /* This is the new size of the vector if we used the loadFactor */
-  size_t newCapacity = (size_t) ((vector->capacity+size) * (1 + LOAD_FACTOR));
+  size_t newCapacity = (size_t) ((vector->length+size) * (1 + LOAD_FACTOR));
   setSizeVector(vector, newCapacity);
 }
 
@@ -39,33 +39,37 @@ void freeVector(Vector *vector) {
   vector->data = NULL;
 }
 
-void push(Vector *vector, uint8_t data) {
-  if (vector->length == vector->capacity) {
-    FATAL("vector overflow");
-  }
-  vector->data[vector->length++] = data;
+void* pushVector(Vector *vector, size_t len) {
+  return insertVector(vector, vector->length, len);
 }
 
-uint8_t pop(Vector *vector) {
-  if (vector->length == 0) {
-    FATAL("vector underflow");
-  }
-  return (vector->data[--(vector->length)]);
-}
-
-void pushData(Vector *vector, void *data, size_t len) {
-  if (vector->length + len >= vector->capacity) {
-    FATAL("vector overflow");
-  }
-  memmove(&(vector->data[vector->length]), data, len);
-  vector->length += len;
-}
-
-void popData(Vector *vector, void *data, size_t len) {
+void popVector(Vector *vector, void *data, size_t len) {
   if (len > vector->length) {
     FATAL("vector underflow");
   }
-  vector->length -= len;
-  memmove(data, &(vector->data[vector->length]), len);
+  memmove(data, (uint8_t*)vector->data + vector->length - len, len);
+  removeVector(vector, vector->length - len, len);
 }
 
+// Insert a segment of empty data of len length at the specified position loc
+void* insertVector(Vector *vector, size_t loc, size_t len) {
+  if (vector->length + len >= vector->capacity) {
+    resizeVector(vector, len);
+  }
+  uint8_t* data = vector->data;
+  uint8_t* datadest = data + loc;
+  memmove(data + loc + len, data + loc, vector->length - loc);
+  vector->length += len;
+  return datadest;
+}
+
+void removeVector(Vector *vector, size_t loc, size_t len) {
+  if (len > vector->length - loc) {
+    FATAL("vector underflow");
+  }
+
+  uint8_t* data = vector->data;
+
+  memmove(data + loc, data + loc + len, vector->length - (loc + len));
+  vector->length -= len;
+}

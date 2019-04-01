@@ -15,9 +15,10 @@ typedef enum {
 
 typedef struct {
   void (*nativeFunPointer)(Vector *, Table *, Table *);
-  char *body;
   FILE *file;
   FunctionType funType;
+  size_t bodyLength;
+  char *body;
 } Function;
 
 void initPrelude(Table *funtab);

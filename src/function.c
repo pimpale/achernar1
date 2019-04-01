@@ -14,12 +14,13 @@ void initNativeFunction(Function *fun,
   fun->nativeFunPointer = funPtr;
   fun->body = NULL;
   fun->file = NULL;
+  fun->bodyLength = 0;
 }
 
 void initForthFunction(Function *fun, char *body) {
   fun->funType = FUNCTION_TYPE_FORTH;
-  size_t len = strlen(body);
-  fun->body = malloc(len + 1);
+  fun->bodyLength = strlen(body) + 1;
+  fun->body = malloc(fun->bodyLength);
   strcpy(body, fun->body);
   fun->file = NULL;
   fun->nativeFunPointer = NULL;
@@ -30,27 +31,35 @@ void initFileFunction(Function *fun, FILE *file) {
   fun->body = NULL;
   fun->nativeFunPointer = NULL;
   fun->file = file;
+  fun->bodyLength = 0;
 }
 
 void freeFunction(Function *fun) {
   free(fun->body);
-  fun->body = NULL;
+  free(fun->body);
   fun->nativeFunPointer = NULL;
   fun->file = NULL;
+  fun->bodyLength = 0;
 }
 
 // Variable manipulation function
+
+void mkvar(Vector *stack, Table *funtab, Table *vartab);
+void delvar(Vector *stack, Table *funtab, Table *vartab);
+void getvar(Vector *stack, Table *funtab, Table *vartab);
+void putvar(Vector *stack, Table *funtab, Table *vartab);
+
 void mkvar(Vector *stack, Table *funtab, Table *vartab) {
   UNUSED(funtab);
   size_t varsize;
-  popData(stack, &varsize, sizeof(varsize));
+  popVector(stack, &varsize, sizeof(varsize));
 
   char *vardata = malloc(varsize);
 
   size_t namesize;
-  popData(stack, &namesize, sizeof(namesize));
+  popVector(stack, &namesize, sizeof(namesize));
   char *name = malloc(namesize);
-  popData(stack, name, namesize);
+  popVector(stack, name, namesize);
 
   putTable(vartab, name, vardata, namesize, varsize);
   free(name);
@@ -60,9 +69,9 @@ void mkvar(Vector *stack, Table *funtab, Table *vartab) {
 void delvar(Vector *stack, Table *funtab, Table *vartab) {
   UNUSED(funtab);
   size_t namesize;
-  popData(stack, &namesize, sizeof(namesize));
+  popVector(stack, &namesize, sizeof(namesize));
   char *name = malloc(namesize);
-  popData(stack, name, namesize);
+  popVector(stack, name, namesize);
   delTable(vartab, name, namesize);
   free(name);
 }
@@ -70,21 +79,31 @@ void delvar(Vector *stack, Table *funtab, Table *vartab) {
 void getvar(Vector *stack, Table *funtab, Table *vartab) {
   UNUSED(funtab);
   size_t namesize;
-  popData(stack, &namesize, sizeof(namesize));
+  popVector(stack, &namesize, sizeof(namesize));
   char *name = malloc(namesize);
-  popData(stack, name, namesize);
+  popVector(stack, name, namesize);
 
   size_t varsize;
   getTable(vartab, name, NULL, namesize, &varsize);
 
   char *vardata = malloc(varsize);
   getTable(vartab, name, vardata, namesize, &varsize);
-  pushData(stack, vardata, varsize);
+  memcpy(pushVector(stack, varsize), vardata, varsize);
   free(name);
   free(vardata);
 }
+
+// Pops the data off the stack and into the variable
 void putvar(Vector *stack, Table *funtab, Table *vartab) {
-  // TODO
+  UNUSED(funtab);
+
+  // First we find the name
+  // Find the name size
+  size_t namesize;
+  popVector(stack, &namesize, sizeof(namesize));
+  // Pop the name off of the stack
+  char *name = malloc(namesize);
+  popVector(stack, name, namesize);
 }
 // Function manipulation function
 void mkfun(Vector *stack, Table *funtab, Table *vartab);
@@ -101,10 +120,10 @@ void loop(Vector *stack, Table *funtab, Table *vartab);
     UNUSED(vartab);                                                         \
     UNUSED(funtab);                                                         \
     type arg1, arg2, ret;                                                   \
-    popData(stack, &arg1, sizeof(arg1));                                    \
-    popData(stack, &arg2, sizeof(arg2));                                    \
+    popVector(stack, &arg1, sizeof(arg1));                                  \
+    popVector(stack, &arg2, sizeof(arg2));                                  \
     ret = arg1 operator arg2;                                               \
-    pushData(stack, &ret, sizeof(ret));                                     \
+    *((type *)pushVector(stack, sizeof(ret))) = ret;                        \
   }
 
 #define MATH_DEFINE_TYPE(type)       \

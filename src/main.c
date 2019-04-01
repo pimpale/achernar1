@@ -7,20 +7,20 @@
 #include "parse.h"
 
 int main() {
-  Vector vector;
+  Vector stack;
   Table funtab;
   Table vartab;
   Parseable input;
 
-  initVector(&vector);
+  initVector(&stack);
   initTable(&funtab);
   initTable(&vartab);
   initParseableFile(&input, stdin);
 
-  parse(&input, &vector, &funtab, &vartab);
+  parse(&input, &stack, &funtab, &vartab);
 
   freeParseable(&input);
-  freeVector(&vector);
+  freeVector(&stack);
   freeTable(&funtab);
   freeTable(&vartab);
 }

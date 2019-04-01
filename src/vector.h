@@ -3,23 +3,23 @@
 
 #include <stdint.h>
 
-#define INITIAL_CAPACITY 1000
-#define LOAD_FACTOR 0.75
-
 typedef struct {
-  uint8_t *data;
+  // Do not realloc data
+  void *data;
+  // Do not manually modify length or capacity
   size_t length;
   size_t capacity;
 } Vector;
 
+// Creates empty vector
 void initVector(Vector *vector);
+// Frees vector
 void freeVector(Vector *vector);
 
+void* insertVector(Vector *vector, size_t loc, size_t len);
+void removeVector(Vector *vector, size_t loc, size_t len);
 
-void push(Vector *vector, uint8_t data);
-uint8_t pop(Vector *vector);
-
-void pushData(Vector *vector, void *data, size_t len);
-void popData(Vector *vector, void *data, size_t len);
+void* pushVector(Vector *vector, size_t len);
+void popVector(Vector *vector, void *data, size_t len);
 
 #endif

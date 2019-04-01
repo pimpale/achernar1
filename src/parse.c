@@ -9,12 +9,12 @@
 #include "table.h"
 
 /* Private Function Definitions */
-void parseString(Parseable *stream, Vector *vector);
-void parseNumber(Parseable *stream, Vector *vector);
-void parseFunction(Parseable *stream, Vector *vector, Table *funtab,
+void parseString(Parseable *stream, Vector *stack);
+void parseNumber(Parseable *stream, Vector *stack);
+void parseFunction(Parseable *stream, Vector *stack, Table *funtab,
                    Table *vartab);
 
-void parseString(Parseable *stream, Vector *vector) {
+void parseString(Parseable *stream, Vector *stack) {
   if (nextValue(stream) != '(') {
     FATAL("malformed string literal");
   }
@@ -31,27 +31,27 @@ void parseString(Parseable *stream, Vector *vector) {
       }
     } else if (c == '(') {
       depth++;
-      push(vector, (uint8_t)c);
+      *(uint8_t*)pushVector(stack, sizeof(uint8_t)) = (uint8_t)c;
     } else if (c == ')') {
       depth--;
       if (depth == 0) {
         break;
       } else {
-        push(vector, (uint8_t)c);
+        *(uint8_t*)pushVector(stack, sizeof(uint8_t)) = (uint8_t)c;
       }
     } else {
-      push(vector, (uint8_t)c);
+      *(uint8_t*)pushVector(stack, sizeof(uint8_t)) = (uint8_t)c;
     }
     strlength++;
   }
-  push(vector, 0);  // signal end
+  *(uint8_t*)pushVector(stack, sizeof(uint8_t)) = 0; // signal end
   strlength++;
-  pushData(vector, &strlength, sizeof(size_t));  // push strlength
+  *(size_t*)pushVector(stack, sizeof(size_t)) = strlength; // push strlength
 }
 
 // parse until space encountered, then push number.
 // Numbers > 255 result in undefined behavior
-void parseNumber(Parseable *stream, Vector *vector) {
+void parseNumber(Parseable *stream, Vector *stack) {
   int32_t c;
   size_t numBufPos = 0;
   char numBuf[NUMERICAL_LITERAL_MAX + 1];
@@ -67,11 +67,14 @@ void parseNumber(Parseable *stream, Vector *vector) {
   if (num > UINT8_MAX || num < 0) {
     FATAL("numerical literal out of bounds");
   }
-  push(vector, (uint8_t)num);
+  *(uint8_t*)pushVector(stack, sizeof(uint8_t)) = (uint8_t)num; 
 }
 
-void parseFunction(Parseable *stream, Vector *vector, Table *funtab,
+void parseFunction(Parseable *stream, Vector *stack, Table *funtab,
                    Table *vartab) {
+  UNUSED(stack);
+  UNUSED(vartab);
+  UNUSED(funtab);
   char functionBuf[FUNCTION_NAME_MAX + 1];
   size_t len = 0;
   int32_t c;
@@ -89,17 +92,17 @@ void parseFunction(Parseable *stream, Vector *vector, Table *funtab,
 }
 
 // Parses stream until end
-void parse(Parseable *stream, Vector *vector, Table *funtab, Table *vartab) {
+void parse(Parseable *stream, Vector *stack, Table *funtab, Table *vartab) {
   int32_t c;
   while ((c = nextValue(stream)) != EOF) {
     if (!isblank(c) && c != '\n') {
       backValue(stream);
       if (c == '(' || c == ')') {
-        parseString(stream, vector);
+        parseString(stream, stack);
       } else if (isdigit(c)) {
-        parseNumber(stream, vector);
+        parseNumber(stream, stack);
       } else {
-        parseFunction(stream, vector, funtab, vartab);
+        parseFunction(stream, stack, funtab, vartab);
       }
     }
   }
