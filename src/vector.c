@@ -73,3 +73,15 @@ void removeVector(Vector *vector, size_t loc, size_t len) {
   memmove(data + loc, data + loc + len, vector->length - (loc + len));
   vector->length -= len;
 }
+
+void* getVector(Vector* vector, size_t loc) {
+  if(loc > vector->length) {
+    FATAL("vector out of bounds");
+  }
+  uint8_t* data = vector->data;
+  return data + loc;
+}
+
+size_t lengthVector(Vector *vector) {
+  return vector->length;
+}
