@@ -96,11 +96,10 @@ void getvar(Vector *stack, Table *funtab, Table *vartab) {
 // Pops the data off the stack and into the variable
 void putvar(Vector *stack, Table *funtab, Table *vartab) {
   UNUSED(funtab);
-
   // First we find the name
   // Find the name size
   size_t namesize;
-  popVector(stack, &namesize, sizeof(namesize));
+  VEC_POP(stack, &namesize, size_t);
   // Pop the name off of the stack
   char *name = malloc(namesize);
   popVector(stack, name, namesize);

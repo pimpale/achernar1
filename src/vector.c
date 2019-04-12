@@ -9,7 +9,6 @@
 #define INITIAL_CAPACITY 1000
 // The percent it will increase when out of room MUST BE POSITIVE
 // Ex. 0.5 -> 50% expansion each time the limit is hit 
-#define LOAD_FACTOR 0.75 
 
 void setSizeVector(Vector *vector, size_t size);
 void resizeVector(Vector *vector, size_t size);
@@ -23,7 +22,7 @@ void setSizeVector(Vector *vector, size_t size) {
 /* Resizes the vector in order to fit an element of this size in */
 void resizeVector(Vector *vector, size_t size) {
   /* This is the new size of the vector if we used the loadFactor */
-  size_t newCapacity = (size_t) ((vector->length+size) * (1 + LOAD_FACTOR));
+  size_t newCapacity = (size_t) ((vector->length+size) * vector->loadFactor);
   setSizeVector(vector, newCapacity);
 }
 
@@ -31,6 +30,8 @@ void resizeVector(Vector *vector, size_t size) {
 void initVector(Vector *vector) {
   vector->data = NULL;
   vector->length = 0;
+  vector->capacity = 0;
+  vector->loadFactor = 1.5f;
   resizeVector(vector, INITIAL_CAPACITY);
 }
 
@@ -58,7 +59,10 @@ void* insertVector(Vector *vector, size_t loc, size_t len) {
   }
   uint8_t* data = vector->data;
   uint8_t* datadest = data + loc;
+  // Move memory
   memmove(data + loc + len, data + loc, vector->length - loc);
+  // Zero out new memory
+  memset(data + loc, 0, len);
   vector->length += len;
   return datadest;
 }
@@ -84,4 +88,14 @@ void* getVector(Vector* vector, size_t loc) {
 
 size_t lengthVector(Vector *vector) {
   return vector->length;
+}
+
+
+float getLoadFactorVector(Vector *vector) {
+  return vector->loadFactor;
+}
+
+void setLoadFactorVector(Vector *vector, float loadFactor) {
+  vector->loadFactor = loadFactor;
+  return;
 }

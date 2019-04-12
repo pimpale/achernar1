@@ -14,13 +14,14 @@ typedef enum {
 } FunctionType;
 
 typedef struct {
+  FunctionType funType;
   void (*nativeFunPointer)(Vector *, Table *, Table *);
   FILE *file;
-  FunctionType funType;
-  size_t bodyLength;
   char *body;
+  size_t bodyLength;
 } Function;
 
 void initPrelude(Table *funtab);
+void freePrelude(Table *funtab);
 
 #endif
