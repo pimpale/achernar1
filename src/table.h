@@ -13,8 +13,6 @@ typedef struct {
   size_t mappingCount;
   // Total number of spots for mappings
   size_t mappingCapacity;
-  // Ideal ratio of mappingCount to mappingCapacity 
-  float loadFactor
 } Table;
 
 /* Initialize the table */
@@ -27,11 +25,16 @@ void freeTable(Table *table);
 /* Puts a Mapping in the table, creating one if it doesnt exist. If value is null, will set valuelen*/
 void putTable(Table *table, void *key, size_t keylen, void *value, size_t valuelen);
 
-/* Retrieves the value of the table given the key
- * If the value is found, the */
-void getTable(Table *table, void *key, void *value, size_t keylen,
+/* Returns the size of the value */
+size_t getValueLengthTable(Table* table, void *key, size_t keylen);
+
+/* Copies up to valuelen bytes of the value into value for the corresponding key*/
+void getTable(Table *table, void *key, size_t keylen, void *value,
               size_t valuelen);
 /* Deletes the Mapping given by key */
 void delTable(Table *table, void *key, size_t keylen);
+
+/* Determines the current load of the table */
+float currentLoadTable(Table* table);
 
 #endif
