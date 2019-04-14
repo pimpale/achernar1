@@ -1,8 +1,8 @@
 #ifndef TABLE_H
 #define TABLE_H
 
-#include <stdlib.h>
-#include <string.h>
+#include <stdint.h>
+#include <stddef.h>
 #include "vector.h"
 
 // Do not manually modify
@@ -28,7 +28,7 @@ void putTable(Table *table, void *key, size_t keylen, void *value, size_t valuel
 /* Returns the size of the value */
 size_t getValueLengthTable(Table* table, void *key, size_t keylen);
 
-/* Copies up to valuelen bytes of the value into value for the corresponding key*/
+/* Copies bytes of the value into value for the corresponding key. Caller must ensure via getValueLengthTable that it is the correct size */
 void getTable(Table *table, void *key, size_t keylen, void *value,
               size_t valuelen);
 /* Deletes the Mapping given by key */

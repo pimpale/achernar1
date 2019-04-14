@@ -21,11 +21,11 @@ size_t hashTable(void *data, size_t datalen, size_t bucketCount,
 }
 
 typedef struct {
-  bool existent;
   void *key;
   size_t keylen;
   void *value;
   size_t valuelen;
+  bool existent;
 } Mapping;
 
 /* Initializes a mapping data structure */
@@ -184,7 +184,8 @@ void getTable(Table *table, void *key, size_t keylen, void *value,
   size_t index = getMappingIndexTable(table, key, keylen);
   Mapping *m = VEC_GET(&table->mappings, index, Mapping);
   if (m->existent) {
-    
+    memcpy(value, m->value, valuelen);
   }
+  return;
 }
 
