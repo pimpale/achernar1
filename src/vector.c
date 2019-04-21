@@ -1,12 +1,12 @@
 #include <stdint.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
-#include "constants.h"
 #include "vector.h"
 
 //The initial capacity of the vector
-#define INITIAL_CAPACITY 1000
+#define INITIAL_CAPACITY 1
 // The percent it will increase when out of room MUST BE POSITIVE
 // Ex. 0.5 -> 50% expansion each time the limit is hit 
 
@@ -99,3 +99,4 @@ void setLoadFactorVector(Vector *vector, float loadFactor) {
   vector->loadFactor = loadFactor;
   return;
 }
+
