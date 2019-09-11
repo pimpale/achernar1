@@ -31,22 +31,22 @@ void parseString(Parseable *stream, Vector *stack) {
       }
     } else if (c == '(') {
       depth++;
-      *(uint8_t*)pushVector(stack, sizeof(uint8_t)) = (uint8_t)c;
+      *VEC_PUSH(stack, uint8_t) = (uint8_t)c;
     } else if (c == ')') {
       depth--;
       if (depth == 0) {
         break;
       } else {
-        *(uint8_t*)pushVector(stack, sizeof(uint8_t)) = (uint8_t)c;
+      *VEC_PUSH(stack, uint8_t) = (uint8_t)c;
       }
     } else {
-      *(uint8_t*)pushVector(stack, sizeof(uint8_t)) = (uint8_t)c;
+      *VEC_PUSH(stack, uint8_t) = (uint8_t)c;
     }
     strlength++;
   }
-  *(uint8_t*)pushVector(stack, sizeof(uint8_t)) = 0; // signal end
+  *VEC_PUSH(stack, uint8_t) = 0; // signal end
   strlength++;
-  *(size_t*)pushVector(stack, sizeof(size_t)) = strlength; // push strlength
+  *VEC_PUSH(stack, size_t) = strlength; // push strlength
 }
 
 // parse until space encountered, then push number.
@@ -62,12 +62,13 @@ void parseNumber(Parseable *stream, Vector *stack) {
       numBuf[numBufPos++] = (char)c;
     }
   }
+  // terminate string
   numBuf[numBufPos] = '\0';
   int num = atoi(numBuf);
   if (num > UINT8_MAX || num < 0) {
     FATAL("numerical literal out of bounds");
   }
-  *(uint8_t*)pushVector(stack, sizeof(uint8_t)) = (uint8_t)num; 
+  *VEC_PUSH(stack, uint8_t) = (uint8_t)num;
 }
 
 void parseFunction(Parseable *stream, Vector *stack, Table *funtab,

@@ -3,12 +3,14 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "constants.h"
 #include "vector.h"
 
-//The initial capacity of the vector
+
+// The initial capacity of the vector
 #define INITIAL_CAPACITY 1
 // The percent it will increase when out of room MUST BE POSITIVE
-// Ex. 0.5 -> 50% expansion each time the limit is hit 
+// Ex. 1.5 -> 50% expansion each time the limit is hit
 
 void setSizeVector(Vector *vector, size_t size);
 void resizeVector(Vector *vector, size_t size);
@@ -22,10 +24,9 @@ void setSizeVector(Vector *vector, size_t size) {
 /* Resizes the vector in order to fit an element of this size in */
 void resizeVector(Vector *vector, size_t size) {
   /* This is the new size of the vector if we used the loadFactor */
-  size_t newCapacity = (size_t) ((vector->length+size) * vector->loadFactor);
+  size_t newCapacity = (size_t)((vector->length + size) * vector->loadFactor);
   setSizeVector(vector, newCapacity);
 }
-
 
 void initVector(Vector *vector) {
   vector->data = NULL;
@@ -40,7 +41,7 @@ void freeVector(Vector *vector) {
   vector->data = NULL;
 }
 
-void* pushVector(Vector *vector, size_t len) {
+void *pushVector(Vector *vector, size_t len) {
   return insertVector(vector, vector->length, len);
 }
 
@@ -48,55 +49,49 @@ void popVector(Vector *vector, void *data, size_t len) {
   if (len > vector->length) {
     FATAL("vector underflow");
   }
-  memmove(data, (uint8_t*)vector->data + vector->length - len, len);
+  memmove(data, (uint8_t *)vector->data + vector->length - len, len);
   removeVector(vector, vector->length - len, len);
 }
 
 // Insert a segment of empty data of len length at the specified position loc
-void* insertVector(Vector *vector, size_t loc, size_t len) {
+void *insertVector(Vector *vector, size_t loc, size_t len) {
   if (vector->length + len >= vector->capacity) {
     resizeVector(vector, len);
   }
-  uint8_t* data = vector->data;
-  uint8_t* datadest = data + loc;
-  // Move memory
-  memmove(data + loc + len, data + loc, vector->length - loc);
-  // Zero out new memory
-  memset(data + loc, 0, len);
   vector->length += len;
-  return datadest;
+  uint8_t *src = getVector(vector, loc);
+  uint8_t *dest = getVector(vector, loc + len);
+  // Move memory from end of allocation back
+  memmove(dest, src, vector->length - (loc + len));
+  // Zero out new memory
+  memset(src, 0, len);
+  return src;
 }
 
 void removeVector(Vector *vector, size_t loc, size_t len) {
   if (len > vector->length - loc) {
     FATAL("vector underflow");
   }
-
-  uint8_t* data = vector->data;
-
-  memmove(data + loc, data + loc + len, vector->length - (loc + len));
   vector->length -= len;
+
+  uint8_t *src = getVector(vector, loc + len);
+  uint8_t *dest = getVector(vector, loc);
+  memmove(dest, src, vector->length - loc);
 }
 
-void* getVector(Vector* vector, size_t loc) {
-  if(loc > vector->length) {
+void *getVector(Vector *vector, size_t loc) {
+  if (loc > vector->length) {
     FATAL("vector out of bounds");
   }
-  uint8_t* data = vector->data;
+  uint8_t *data = vector->data;
   return data + loc;
 }
 
-size_t lengthVector(Vector *vector) {
-  return vector->length;
-}
+size_t lengthVector(Vector *vector) { return vector->length; }
 
-
-float getLoadFactorVector(Vector *vector) {
-  return vector->loadFactor;
-}
+float getLoadFactorVector(Vector *vector) { return vector->loadFactor; }
 
 void setLoadFactorVector(Vector *vector, float loadFactor) {
   vector->loadFactor = loadFactor;
   return;
 }
-

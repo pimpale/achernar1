@@ -133,9 +133,10 @@ void loop(Vector *stack, Table *funtab, Table *vartab);
 
 #define NATIVE_FUNCTION_PUT(funName, stringLiteral)                        \
   do {                                                                     \
+    char* string = stringLiteral;                                          \
     Function f;                                                            \
     initNativeFunction(&f, &(funName));                                    \
-    putTable(funtab, stringLiteral, &f, strlen(stringLiteral), sizeof(f)); \
+    putTable(funtab, string, &f, strlen(string), sizeof(f)); \
   } while (0)
 
 #define MATH_TYPE_PUT(type, name)               \
