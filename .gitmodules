@@ -1,0 +1,6 @@
+[submodule "ext/cvec"]
+	path = ext/cvec
+	url = https://github.com/pimpale/cvec
+[submodule "ext/ctable"]
+	path = ext/ctable
+	url = https://github.com/pimpale/ctable

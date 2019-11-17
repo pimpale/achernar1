@@ -1,13 +1,13 @@
 TARGET_EXEC ?= stacklang
 
 BUILD_DIR ?= ./obj
-SRC_DIRS ?= ./src
+SRC_DIRS ?= $(shell find . -type d -name src)
 
 SRCS := $(shell find $(SRC_DIRS) -name *.cpp -or -name *.c -or -name *.s)
 OBJS := $(SRCS:%=$(BUILD_DIR)/%.o)
 DEPS := $(OBJS:.o=.d)
 
-INC_DIRS := ./include
+INC_DIRS := $(shell find . -type d -name inc)
 INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 
 LDFLAGS := 
