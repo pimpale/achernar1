@@ -11,15 +11,8 @@ void initParseableFile(Parseable* parseable, FILE* fp) {
   parseable->len = 0;
   parseable->loc = 0;
 }
-void initParseableMemory_m(Parseable* parseable, char* ptr, size_t len) {
-  parseable->backing = PARSEABLE_BACKING_MEMORY_MALLOCED;
-  parseable->file = NULL;
-  parseable->memory = ptr;
-  parseable->len = len;
-  parseable->loc = 0;
-}
-void initParseableMemory_s(Parseable* parseable, char* ptr, size_t len) {
-  parseable->backing = PARSEABLE_BACKING_MEMORY_STACK;
+void initParseableMemory(Parseable* parseable, char* ptr, size_t len) {
+  parseable->backing = PARSEABLE_BACKING_MEMORY;
   parseable->file = NULL;
   parseable->memory = ptr;
   parseable->len = len;
@@ -29,8 +22,7 @@ void initParseableMemory_s(Parseable* parseable, char* ptr, size_t len) {
 int32_t nextValue(Parseable* p) {
   int32_t nextValue;
   switch (p->backing) {
-    case PARSEABLE_BACKING_MEMORY_STACK:  // Fall through
-    case PARSEABLE_BACKING_MEMORY_MALLOCED: {
+    case PARSEABLE_BACKING_MEMORY: {
       if (p->loc >= p->len) {
         nextValue = EOF;
       } else {
@@ -48,21 +40,30 @@ int32_t nextValue(Parseable* p) {
   return nextValue;
 }
 
-void backValue(Parseable* p) {
+int32_t peekValue(Parseable* p) {
+  int32_t peekValue;
   switch (p->backing) {
-    case PARSEABLE_BACKING_MEMORY_STACK: // Fall through
-    case PARSEABLE_BACKING_MEMORY_MALLOCED:
-      {
-        if(p->loc == 0) {
-          p->loc--;
-          return;
-        }
-    case PARSEABLE_BACKING_FILE:
-        ungetc(p->lastVal, p->file);
-        return;
+    case PARSEABLE_BACKING_MEMORY: {
+      if (p->loc >= p->len) {
+        peekValue = EOF;
+      } else {
+        // Return the element at the location, and increment location
+        peekValue  = (p->memory[p->loc]);
       }
+      break;
+    }
+    case PARSEABLE_BACKING_FILE: {
+      int32_t c = getc(p->file);
+      ungetc(c, p->file);
+      p->lastVal = c;
+      peekValue = (p->lastVal);
+      break;
+    }
   }
+  return peekValue;
 }
+
+
 
 void freeParseable(Parseable* p) {
   //do nothing for now
