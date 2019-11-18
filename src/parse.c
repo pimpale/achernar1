@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+
+#include "function.h"
 #include "constants.h"
 #include "parseable.h"
 #include "table.h"
@@ -84,7 +86,13 @@ static void parseFunction(Parseable *stream, Vector *stack, Table *funtab,
   functionBuf[len] = '\0';
 
   // Now eval function
-  // TODO make function stuff happen
+  Function fun;
+  if(getValueLengthTable(funtab, functionBuf, len) == 0) {
+    puts(functionBuf);
+    FATAL("function not found");
+  }
+  getTable(funtab, functionBuf, len, &fun, sizeof(Function));
+  executeFunction(&fun, stack, funtab, vartab);
 }
 
 // Parses stream until end

@@ -1,10 +1,14 @@
+
 #include "function.h"
 
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "constants.h"
+#include "parse.h"
+#include "parseable.h"
 #include "table.h"
 #include "vector.h"
 
@@ -13,7 +17,6 @@ void initNativeFunction(Function *fun,
   fun->funType = FUNCTION_TYPE_NATIVE;
   fun->nativeFunPointer = funPtr;
   fun->body = NULL;
-  fun->file = NULL;
   fun->bodyLength = 0;
 }
 
@@ -22,23 +25,28 @@ void initForthFunction(Function *fun, char *body) {
   fun->bodyLength = strlen(body) + 1;
   fun->body = malloc(fun->bodyLength);
   strcpy(body, fun->body);
-  fun->file = NULL;
   fun->nativeFunPointer = NULL;
 }
 
-void initFileFunction(Function *fun, FILE *file) {
-  fun->funType = FUNCTION_TYPE_FILESYSTEM;
-  fun->body = NULL;
-  fun->nativeFunPointer = NULL;
-  fun->file = file;
-  fun->bodyLength = 0;
+void executeFunction(Function *fun, Vector *stack, Table *funtab, Table *vartab) {
+  switch(fun->funType) {
+    case FUNCTION_TYPE_NATIVE: {
+      fun->nativeFunPointer(stack, funtab, vartab);
+      break;
+    }
+    case FUNCTION_TYPE_FORTH: {
+      Parseable bodyParser;
+      initParseableMemory(&bodyParser, fun->body, fun->bodyLength);
+      parse(&bodyParser, stack, funtab, vartab);
+      freeParseable(&bodyParser);
+      break;
+    }
+  }
 }
 
 void freeFunction(Function *fun) {
   free(fun->body);
-  free(fun->body);
   fun->nativeFunPointer = NULL;
-  fun->file = NULL;
   fun->bodyLength = 0;
 }
 
@@ -67,7 +75,7 @@ void mkvar(Vector *stack, Table *funtab, Table *vartab) {
   popVector(stack, name, namesize);
 
   // If a variable with this name already exists, we must free it
-  if(getValueLengthTable(vartab, name, namesize) != 0) {
+  if (getValueLengthTable(vartab, name, namesize) != 0) {
     delTable(vartab, name, namesize);
   }
 
@@ -102,7 +110,7 @@ void getvar(Vector *stack, Table *funtab, Table *vartab) {
   // Get size of variable
   size_t varsize = getValueLengthTable(vartab, name, namesize);
 
-  if(varsize == 0) {
+  if (varsize == 0) {
     // TODO error handling we want to make this crash
   }
 
@@ -129,7 +137,7 @@ void putvar(Vector *stack, Table *funtab, Table *vartab) {
   // Then we check size of this variable
   size_t varsize = getValueLengthTable(vartab, name, namesize);
 
-  if(varsize == 0) {
+  if (varsize == 0) {
     // TODO handle error
   }
 
@@ -137,7 +145,7 @@ void putvar(Vector *stack, Table *funtab, Table *vartab) {
   uint8_t *vardata = getVector(stack, lengthVector(stack) - varsize);
   putTable(vartab, name, namesize, vardata, varsize);
   // Now we delete from the stack
-  popVector(stack, varsize);
+  popVector(stack, NULL, varsize);
 
   // free
   free(name);
@@ -169,7 +177,7 @@ void mkfun(Vector *stack, Table *funtab, Table *vartab) {
   popVector(stack, body, bodysize);
 
   // If a function by this name already exists, we must free it
-  if(getValueLengthTable(funtab, name, namesize) != 0) {
+  if (getValueLengthTable(funtab, name, namesize) != 0) {
     // First we must free the Function within the table
     Function funToDelete;
     getTable(funtab, name, namesize, &funToDelete, sizeof(Function));
@@ -183,7 +191,7 @@ void mkfun(Vector *stack, Table *funtab, Table *vartab) {
   initForthFunction(&fun, body);
 
   // Add this to the table
-  putTable(funtab, name, &fun, namesize, sizeof(fun));
+  putTable(funtab, name, namesize, &fun, sizeof(Function));
 
   // Free memory
   free(name);
@@ -205,7 +213,7 @@ void delfun(Vector *stack, Table *funtab, Table *vartab) {
   popVector(stack, name, namesize);
 
   // If a function by this name already exists, we must free it
-  if(getValueLengthTable(funtab, name, namesize) != 0) {
+  if (getValueLengthTable(funtab, name, namesize) != 0) {
     // First we must free the Function within the table
     Function funToDelete;
     getTable(funtab, name, namesize, &funToDelete, sizeof(Function));
@@ -219,6 +227,7 @@ void delfun(Vector *stack, Table *funtab, Table *vartab) {
 void eval(Vector *stack, Table *funtab, Table *vartab);
 void evalif(Vector *stack, Table *funtab, Table *vartab);
 void loop(Vector *stack, Table *funtab, Table *vartab);
+void println(Vector *stack, Table *funtab, Table *vartab);
 
 // Evaluates the string unconditionally
 // Ex: (1 2 +) eval
@@ -228,7 +237,7 @@ void eval(Vector *stack, Table *funtab, Table *vartab) {
   VEC_POP(stack, &stringsize, size_t);
   // Pop the string off of the stack
   char *string = malloc(stringsize);
-  popVector(stack, string, namesize);
+  popVector(stack, string, stringsize);
 
   // Now we make a parseable of the string and parse
   Parseable parseable;
@@ -249,7 +258,7 @@ void evalif(Vector *stack, Table *funtab, Table *vartab) {
   VEC_POP(stack, &value, sizeof(value));
 
   // If it's not false
-  if(value != 0) {
+  if (value != 0) {
     eval(stack, funtab, vartab);
   }
 }
@@ -268,7 +277,6 @@ void evalif(Vector *stack, Table *funtab, Table *vartab) {
 // This example creates a variable with one byte of space, sets it to 10
 // Each loop it decrements and then finishes
 void loop(Vector *stack, Table *funtab, Table *vartab) {
-
   // Get the evaluator
   size_t evaluatorsize;
   VEC_POP(stack, &evaluatorsize, size_t);
@@ -286,9 +294,9 @@ void loop(Vector *stack, Table *funtab, Table *vartab) {
 
   // Now make parseable
 
-  while(true) {
-
-    // Evaluate the evaluator, if the final result is not 0, evaluate the next bit
+  while (true) {
+    // Evaluate the evaluator, if the final result is not 0, evaluate the next
+    // bit
     Parseable evaluatorParseable;
     initParseableMemory(&evaluatorParseable, evaluator, evaluatorsize);
     // Parse it in this context
@@ -298,20 +306,36 @@ void loop(Vector *stack, Table *funtab, Table *vartab) {
     uint8_t result;
     VEC_POP(stack, &result, uint8_t);
 
-    if(result == 0) {
+    if (result == 0) {
       break;
     }
-    
+
     Parseable bodyParseable;
     initParseableMemory(&bodyParseable, body, bodysize);
     parse(&bodyParseable, stack, funtab, vartab);
-    freeParseable(
+    freeParseable(&bodyParseable);
   }
 
   free(body);
   free(evaluator);
 }
 
+// Prints string to standard output
+// Ex: (hello world!) println
+// This example would print "hello world!" to the output, with a newline
+void println(Vector *stack, Table *funtab, Table *vartab) {
+  // Find the string size
+  size_t stringsize;
+  VEC_POP(stack, &stringsize, size_t);
+  // Pop the string off of the stack
+  char *string = malloc(stringsize);
+  popVector(stack, string, stringsize);
+
+  // Print it
+  puts(string);
+  // Free
+  free(string);
+}
 
 
 #define OPERATOR_DEFINE_TYPE(type, operatorName, operator)                  \
@@ -332,12 +356,12 @@ void loop(Vector *stack, Table *funtab, Table *vartab) {
   OPERATOR_DEFINE_TYPE(type, mul, *) \
   OPERATOR_DEFINE_TYPE(type, div, /)
 
-#define NATIVE_FUNCTION_PUT(funName, stringLiteral)          \
-  do {                                                       \
-    char *string = stringLiteral;                            \
-    Function f;                                              \
-    initNativeFunction(&f, &(funName));                      \
-    putTable(funtab, string, &f, strlen(string), sizeof(f)); \
+#define NATIVE_FUNCTION_PUT(funName, stringLiteral)                     \
+  do {                                                                  \
+    char *string = stringLiteral;                                       \
+    Function f;                                                         \
+    initNativeFunction(&f, &(funName));                                 \
+    putTable(funtab, string, strlen(string) + 1, &f, sizeof(Function)); \
   } while (0)
 
 #define MATH_TYPE_PUT(type, name)               \
@@ -346,19 +370,6 @@ void loop(Vector *stack, Table *funtab, Table *vartab) {
     NATIVE_FUNCTION_PUT(sub_##type, "-##name"); \
     NATIVE_FUNCTION_PUT(div_##type, "/##name"); \
     NATIVE_FUNCTION_PUT(mul_##type, "*##name"); \
-  } while (0)
-
-#define NATIVE_FUNCTION_DEL(stringLiteral)                  \
-  do {                                                      \
-    delTable(funtab, stringLiteral, strlen(stringLiteral)); \
-  } while (0)
-
-#define MATH_TYPE_DEL(name)         \
-  do {                              \
-    NATIVE_FUNCTION_DEL("+##name"); \
-    NATIVE_FUNCTION_DEL("-##name"); \
-    NATIVE_FUNCTION_DEL("/##name"); \
-    NATIVE_FUNCTION_DEL("*##name"); \
   } while (0)
 
 MATH_DEFINE_TYPE(uint8_t)
@@ -376,21 +387,8 @@ void initPrelude(Table *funtab) {
   NATIVE_FUNCTION_PUT(putvar, "putvar");
   NATIVE_FUNCTION_PUT(mkfun, "mkfun");
   NATIVE_FUNCTION_PUT(delfun, "delfun");
+  NATIVE_FUNCTION_PUT(eval, "eval");
   NATIVE_FUNCTION_PUT(evalif, "evalif");
   NATIVE_FUNCTION_PUT(loop, "loop");
-}
-
-void freePrelude(Table *funtab) {
-  MATH_TYPE_DEL(u8);
-  MATH_TYPE_DEL(u64);
-  MATH_TYPE_DEL(f64);
-
-  NATIVE_FUNCTION_DEL("mkvar");
-  NATIVE_FUNCTION_DEL("delvar");
-  NATIVE_FUNCTION_DEL("getvar");
-  NATIVE_FUNCTION_DEL("putvar");
-  NATIVE_FUNCTION_DEL("mkfun");
-  NATIVE_FUNCTION_DEL("delfun");
-  NATIVE_FUNCTION_DEL("evalif");
-  NATIVE_FUNCTION_DEL("loop");
+  NATIVE_FUNCTION_PUT(println, "println");
 }

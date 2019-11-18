@@ -5,6 +5,7 @@
 #include "parseable.h"
 
 void initParseableFile(Parseable* parseable, FILE* fp) {
+  // TODO seek file to beginning?
   parseable->backing = PARSEABLE_BACKING_FILE;
   parseable->file = fp;
   parseable->memory = NULL;
