@@ -4,9 +4,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-
-#include "function.h"
 #include "constants.h"
+#include "function.h"
 #include "parseable.h"
 #include "table.h"
 #include "vector.h"
@@ -20,7 +19,8 @@ static void parseString(Parseable *stream, Vector *stack) {
   uint32_t strlength = 0;
   while ((c = nextValue(stream)) != EOF) {
     if (strlength == UINT32_MAX) {
-      FATAL("string literal out of bounds");
+      printf("parse: string length exceeds maximum value\n");
+      FATAL("SYNTAX ERROR");
     } else if (c == '\\') {
       c = nextValue(stream);
       if (c == EOF) {
@@ -44,7 +44,6 @@ static void parseString(Parseable *stream, Vector *stack) {
   *VEC_PUSH(stack, uint8_t) = 0;  // signal end
   strlength++;
   *VEC_PUSH(stack, size_t) = strlength;  // push strlength
-  printf("%zu\n", strlength);
 }
 
 // parse until space encountered, then push number.
@@ -64,16 +63,14 @@ static void parseNumber(Parseable *stream, Vector *stack) {
   numBuf[numBufPos] = '\0';
   int num = atoi(numBuf);
   if (num > UINT8_MAX || num < 0) {
-    FATAL("numerical literal out of bounds");
+    printf("parse: numerical value out of bounds\n");
+    FATAL("SYNTAX ERROR");
   }
   *VEC_PUSH(stack, uint8_t) = (uint8_t)num;
 }
 
 static void parseFunction(Parseable *stream, Vector *stack, Table *funtab,
-    Table *vartab) {
-  UNUSED(stack);
-  UNUSED(vartab);
-  UNUSED(funtab);
+                          Table *vartab) {
   char functionBuf[FUNCTION_NAME_MAX + 1];
   size_t len = 0;
   int32_t c;
@@ -88,10 +85,11 @@ static void parseFunction(Parseable *stream, Vector *stack, Table *funtab,
 
   // Now eval function
   Function fun;
-  if(getValueLengthTable(funtab, functionBuf, len+1) == 0) {
-    FATAL("function not found");
+  if (getValueLengthTable(funtab, functionBuf, len + 1) == 0) {
+    printf("parse: unknown function: `%s`\n", functionBuf);
+    FATAL("SYNTAX ERROR");
   }
-  getTable(funtab, functionBuf, len+1, &fun, sizeof(Function));
+  getTable(funtab, functionBuf, len + 1, &fun, sizeof(Function));
   executeFunction(&fun, stack, funtab, vartab);
 }
 
@@ -101,14 +99,11 @@ void parse(Parseable *stream, Vector *stack, Table *funtab, Table *vartab) {
   while ((c = peekValue(stream)) != EOF) {
     if (isblank(c) || c == '\n') {
       nextValue(stream);
-    }
-    else if (c == '(') {
+    } else if (c == '(') {
       parseString(stream, stack);
-    }
-    else if (isdigit(c)) {
+    } else if (isdigit(c)) {
       parseNumber(stream, stack);
-    }
-    else {
+    } else {
       parseFunction(stream, stack, funtab, vartab);
     }
   }

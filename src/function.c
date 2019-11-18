@@ -63,16 +63,16 @@ void putvar(Vector *stack, Table *funtab, Table *vartab);
 void mkvar(Vector *stack, Table *funtab, Table *vartab) {
   UNUSED(funtab);
 
-  // Allocate space for the variable
-  size_t varsize;
-  popVector(stack, &varsize, sizeof(varsize));
-  char *vardata = malloc(varsize);
-
   // Get the name
   size_t namesize;
-  popVector(stack, &namesize, sizeof(namesize));
+  VEC_POP(stack, &namesize, size_t);
   char *name = malloc(namesize);
   popVector(stack, name, namesize);
+
+  // Allocate space for the variable
+  uint8_t varsize;
+  VEC_POP(stack, &varsize, uint8_t);
+  char *vardata = malloc(varsize);
 
   // If a variable with this name already exists, we must free it
   if (getValueLengthTable(vartab, name, namesize) != 0) {
@@ -89,7 +89,7 @@ void mkvar(Vector *stack, Table *funtab, Table *vartab) {
 void delvar(Vector *stack, Table *funtab, Table *vartab) {
   UNUSED(funtab);
   size_t namesize;
-  popVector(stack, &namesize, sizeof(namesize));
+  VEC_POP(stack, &namesize, size_t);
   char *name = malloc(namesize);
   popVector(stack, name, namesize);
   delTable(vartab, name, namesize);
@@ -103,7 +103,7 @@ void getvar(Vector *stack, Table *funtab, Table *vartab) {
 
   // Get name
   size_t namesize;
-  popVector(stack, &namesize, sizeof(namesize));
+  VEC_POP(stack, &namesize, size_t);
   char *name = malloc(namesize);
   popVector(stack, name, namesize);
 
@@ -111,7 +111,8 @@ void getvar(Vector *stack, Table *funtab, Table *vartab) {
   size_t varsize = getValueLengthTable(vartab, name, namesize);
 
   if (varsize == 0) {
-    // TODO error handling we want to make this crash
+    printf("function: getvar: variable name `%s` not defined\n", name);
+    FATAL("FUNCTION USAGE ERROR");
   }
 
   // We push the value of the variable to the vector
@@ -138,7 +139,8 @@ void putvar(Vector *stack, Table *funtab, Table *vartab) {
   size_t varsize = getValueLengthTable(vartab, name, namesize);
 
   if (varsize == 0) {
-    // TODO handle error
+    printf("function: putvar: variable name `%s` not defined\n", name);
+    FATAL("FUNCTION USAGE ERROR");
   }
 
   // Now we pop however many bytes of the thing from the vector to the table
@@ -255,7 +257,7 @@ void eval(Vector *stack, Table *funtab, Table *vartab) {
 void evalif(Vector *stack, Table *funtab, Table *vartab) {
   // Pop the value
   uint8_t value;
-  VEC_POP(stack, &value, sizeof(value));
+  VEC_POP(stack, &value, uint8_t);
 
   // If it's not false
   if (value != 0) {
@@ -363,9 +365,6 @@ void println(Vector *stack, Table *funtab, Table *vartab) {
     initNativeFunction(&f, &(funName));                                 \
     putTable(funtab, string, strlen(string) + 1, &f, sizeof(Function)); \
   } while (0)
-
-#define STR_HELPER(x) #x
-#define STR(x) STR_HELPER(x)
 
 #define MATH_TYPE_PUT(type, name)               \
   do {                                          \

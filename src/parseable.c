@@ -24,7 +24,7 @@ int32_t nextValue(Parseable* p) {
   int32_t nextValue;
   switch (p->backing) {
     case PARSEABLE_BACKING_MEMORY: {
-      if (p->loc >= p->len) {
+      if (p->loc + 1>= p->len) {
         nextValue = EOF;
       } else {
         // Return the element at the location, and increment location
@@ -45,7 +45,7 @@ int32_t peekValue(Parseable* p) {
   int32_t peekValue;
   switch (p->backing) {
     case PARSEABLE_BACKING_MEMORY: {
-      if (p->loc >= p->len) {
+      if (p->loc +1 >= p->len) {
         peekValue = EOF;
       } else {
         // Return the element at the location, and increment location
