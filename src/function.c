@@ -114,9 +114,11 @@ void getvar(Vector *stack, Table *funtab, Table *vartab) {
 }
 
 // Pops the data off the stack and into the variable
+// Ex: 1 2 + (sum) putvar
+// Thie example would put 3 into sum
 void putvar(Vector *stack, Table *funtab, Table *vartab) {
   UNUSED(funtab);
-  // First we find the name
+  // First we find the name of variable
   // Find the name size
   size_t namesize;
   VEC_POP(stack, &namesize, size_t);
@@ -124,16 +126,21 @@ void putvar(Vector *stack, Table *funtab, Table *vartab) {
   char *name = malloc(namesize);
   popVector(stack, name, namesize);
 
-  // First we check size of this variable
+  // Then we check size of this variable
   size_t varsize = getValueLengthTable(vartab, name, namesize);
 
   if(varsize == 0) {
     // TODO handle error
   }
 
-  // Now we get the bytes of it to the table
-  putTable(vartab, 
-      //TODO 
+  // Now we pop however many bytes of the thing from the vector to the table
+  uint8_t *vardata = getVector(stack, lengthVector(stack) - varsize);
+  putTable(vartab, name, namesize, vardata, varsize);
+  // Now we delete from the stack
+  popVector(stack, varsize);
+
+  // free
+  free(name);
 }
 
 // Function manipulation function
@@ -141,8 +148,17 @@ void mkfun(Vector *stack, Table *funtab, Table *vartab);
 void delfun(Vector *stack, Table *funtab, Table *vartab);
 
 // Pops the data off the stack and into the variable
+// Ex: ((hello) println) (say-hello) mkfun
 void mkfun(Vector *stack, Table *funtab, Table *vartab) {
   UNUSED(vartab);
+
+  // First we find the name
+  // Find the name size
+  size_t namesize;
+  VEC_POP(stack, &namesize, size_t);
+  // Pop the name off of the stack
+  char *name = malloc(namesize);
+  popVector(stack, name, namesize);
 
   // Find the body
   // Find the body size
@@ -152,19 +168,12 @@ void mkfun(Vector *stack, Table *funtab, Table *vartab) {
   char *body = malloc(bodysize);
   popVector(stack, body, bodysize);
 
-  // First we find the name
-  // Find the name size
-  size_t namesize;
-  VEC_POP(stack, &namesize, size_t);
-  // Pop the name off of the stack
-  char *name = malloc(namesize);
-  popVector(stack, name, namesize);
-
   // If a function by this name already exists, we must free it
   if(getValueLengthTable(funtab, name, namesize) != 0) {
     // First we must free the Function within the table
     Function funToDelete;
-    getTable(funtab, //TODO
+    getTable(funtab, name, namesize, &funToDelete, sizeof(Function));
+    freeFunction(&funToDelete);
     // Now we delete from the table itself
     delTable(funtab, name, namesize);
   }
@@ -183,7 +192,7 @@ void mkfun(Vector *stack, Table *funtab, Table *vartab) {
 
 // Deletes a function
 // Ex: (println) delfun
-// This would delete delfun
+// This would delete the function println
 void delfun(Vector *stack, Table *funtab, Table *vartab) {
   UNUSED(vartab);
 
@@ -195,8 +204,13 @@ void delfun(Vector *stack, Table *funtab, Table *vartab) {
   char *name = malloc(namesize);
   popVector(stack, name, namesize);
 
-  // If a function by this name exists, we must free it
+  // If a function by this name already exists, we must free it
   if(getValueLengthTable(funtab, name, namesize) != 0) {
+    // First we must free the Function within the table
+    Function funToDelete;
+    getTable(funtab, name, namesize, &funToDelete, sizeof(Function));
+    freeFunction(&funToDelete);
+    // Now we delete from the table itself
     delTable(funtab, name, namesize);
   }
 }
@@ -206,11 +220,13 @@ void eval(Vector *stack, Table *funtab, Table *vartab);
 void evalif(Vector *stack, Table *funtab, Table *vartab);
 void loop(Vector *stack, Table *funtab, Table *vartab);
 
+// Evaluates the string unconditionally
+// Ex: (1 2 +) eval
 void eval(Vector *stack, Table *funtab, Table *vartab) {
   // Find the string size
   size_t stringsize;
   VEC_POP(stack, &stringsize, size_t);
-  // Pop the name off of the stack
+  // Pop the string off of the stack
   char *string = malloc(stringsize);
   popVector(stack, string, namesize);
 
@@ -221,7 +237,7 @@ void eval(Vector *stack, Table *funtab, Table *vartab) {
   // Parse it in this context
   parse(&parseable, stack, funtab, vartab);
 
-  freeParseable(parseable);
+  freeParseable(&parseable);
   free(string);
 }
 
@@ -238,7 +254,63 @@ void evalif(Vector *stack, Table *funtab, Table *vartab) {
   }
 }
 
-void loop
+// Evals the body forever until the value of the second clause is equal to zero
+// Format: (body to run) (body to check if true) loop
+// Ex:
+//    # Say hello 10 times
+//    1 (counter) mkvar
+//    10 (counter) putvar
+//    (
+//      (hello) println
+//      (counter) getvar 1 - putvar
+//    ) (counter) loop
+//
+// This example creates a variable with one byte of space, sets it to 10
+// Each loop it decrements and then finishes
+void loop(Vector *stack, Table *funtab, Table *vartab) {
+
+  // Get the evaluator
+  size_t evaluatorsize;
+  VEC_POP(stack, &evaluatorsize, size_t);
+  // Pop the name off of the stack
+  char *evaluator = malloc(evaluatorsize);
+  popVector(stack, evaluator, evaluatorsize);
+
+  // Get the body
+  // Find the body size
+  size_t bodysize;
+  VEC_POP(stack, &bodysize, size_t);
+  // Pop the body off the stack
+  char *body = malloc(bodysize);
+  popVector(stack, body, bodysize);
+
+  // Now make parseable
+
+  while(true) {
+
+    // Evaluate the evaluator, if the final result is not 0, evaluate the next bit
+    Parseable evaluatorParseable;
+    initParseableMemory(&evaluatorParseable, evaluator, evaluatorsize);
+    // Parse it in this context
+    parse(&evaluatorParseable, stack, funtab, vartab);
+    freeParseable(&evaluatorParseable);
+
+    uint8_t result;
+    VEC_POP(stack, &result, uint8_t);
+
+    if(result == 0) {
+      break;
+    }
+    
+    Parseable bodyParseable;
+    initParseableMemory(&bodyParseable, body, bodysize);
+    parse(&bodyParseable, stack, funtab, vartab);
+    freeParseable(
+  }
+
+  free(body);
+  free(evaluator);
+}
 
 
 
