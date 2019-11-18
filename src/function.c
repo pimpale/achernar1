@@ -364,12 +364,15 @@ void println(Vector *stack, Table *funtab, Table *vartab) {
     putTable(funtab, string, strlen(string) + 1, &f, sizeof(Function)); \
   } while (0)
 
+#define STR_HELPER(x) #x
+#define STR(x) STR_HELPER(x)
+
 #define MATH_TYPE_PUT(type, name)               \
   do {                                          \
-    NATIVE_FUNCTION_PUT(add_##type, "+##name"); \
-    NATIVE_FUNCTION_PUT(sub_##type, "-##name"); \
-    NATIVE_FUNCTION_PUT(div_##type, "/##name"); \
-    NATIVE_FUNCTION_PUT(mul_##type, "*##name"); \
+    NATIVE_FUNCTION_PUT(add_##type, "+" #name); \
+    NATIVE_FUNCTION_PUT(sub_##type, "-" #name); \
+    NATIVE_FUNCTION_PUT(div_##type, "/" #name); \
+    NATIVE_FUNCTION_PUT(mul_##type, "*" #name); \
   } while (0)
 
 MATH_DEFINE_TYPE(uint8_t)

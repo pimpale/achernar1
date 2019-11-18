@@ -44,6 +44,7 @@ static void parseString(Parseable *stream, Vector *stack) {
   *VEC_PUSH(stack, uint8_t) = 0;  // signal end
   strlength++;
   *VEC_PUSH(stack, size_t) = strlength;  // push strlength
+  printf("%zu\n", strlength);
 }
 
 // parse until space encountered, then push number.
@@ -87,11 +88,10 @@ static void parseFunction(Parseable *stream, Vector *stack, Table *funtab,
 
   // Now eval function
   Function fun;
-  if(getValueLengthTable(funtab, functionBuf, len) == 0) {
-    puts(functionBuf);
+  if(getValueLengthTable(funtab, functionBuf, len+1) == 0) {
     FATAL("function not found");
   }
-  getTable(funtab, functionBuf, len, &fun, sizeof(Function));
+  getTable(funtab, functionBuf, len+1, &fun, sizeof(Function));
   executeFunction(&fun, stack, funtab, vartab);
 }
 
