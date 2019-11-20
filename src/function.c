@@ -253,39 +253,47 @@ void eval(Vector *stack, Table *funtab, Table *vartab) {
 }
 
 // Evaluates if the value is not 0
-// Ex: ((hello) println) 1 evalif
+// Ex: 1 ((hello) println) evalif
 void evalif(Vector *stack, Table *funtab, Table *vartab) {
+
+  // Find the string size
+  size_t stringsize;
+  VEC_POP(stack, &stringsize, size_t);
+  // Pop the string off of the stack
+  char *string = malloc(stringsize);
+  popVector(stack, string, stringsize);
+
   // Pop the value
   uint8_t value;
   VEC_POP(stack, &value, uint8_t);
 
   // If it's not false
   if (value != 0) {
-    eval(stack, funtab, vartab);
+    // Now we make a parseable of the string and parse
+    Parseable parseable;
+    initParseableMemory(&parseable, string, stringsize);
+
+    // Parse it in this context
+    parse(&parseable, stack, funtab, vartab);
+    freeParseable(&parseable);
   }
+  free(string);
 }
 
-// Evals the body forever until the value of the second clause is equal to zero
+// Evals until the value on the stack is 0
 // Format: (body to run) (body to check if true) loop
 // Ex:
 //    # Say hello 10 times
-//    1 (counter) mkvar
-//    10 (counter) putvar
+//    10
 //    (
 //      (hello) println
-//      (counter) getvar 1 - putvar
-//    ) (counter) loop
+//      1 -
+//      dupu8
+//    ) loop
 //
 // This example creates a variable with one byte of space, sets it to 10
 // Each loop it decrements and then finishes
 void loop(Vector *stack, Table *funtab, Table *vartab) {
-  // Get the evaluator
-  size_t evaluatorsize;
-  VEC_POP(stack, &evaluatorsize, size_t);
-  // Pop the name off of the stack
-  char *evaluator = malloc(evaluatorsize);
-  popVector(stack, evaluator, evaluatorsize);
-
   // Get the body
   // Find the body size
   size_t bodysize;
@@ -295,15 +303,14 @@ void loop(Vector *stack, Table *funtab, Table *vartab) {
   popVector(stack, body, bodysize);
 
   // Now make parseable
-
   while (true) {
-    // Evaluate the evaluator, if the final result is not 0, evaluate the next
+    // Evaluate the body, if the final result is not 0, keep going
     // bit
-    Parseable evaluatorParseable;
-    initParseableMemory(&evaluatorParseable, evaluator, evaluatorsize);
+    Parseable bodyParseable;
+    initParseableMemory(&bodyParseable, body, bodysize);
     // Parse it in this context
-    parse(&evaluatorParseable, stack, funtab, vartab);
-    freeParseable(&evaluatorParseable);
+    parse(&bodyParseable, stack, funtab, vartab);
+    freeParseable(&bodyParseable);
 
     uint8_t result;
     VEC_POP(stack, &result, uint8_t);
@@ -311,21 +318,17 @@ void loop(Vector *stack, Table *funtab, Table *vartab) {
     if (result == 0) {
       break;
     }
-
-    Parseable bodyParseable;
-    initParseableMemory(&bodyParseable, body, bodysize);
-    parse(&bodyParseable, stack, funtab, vartab);
-    freeParseable(&bodyParseable);
   }
 
   free(body);
-  free(evaluator);
 }
 
 // Prints string to standard output
 // Ex: (hello world!) println
 // This example would print "hello world!" to the output, with a newline
 void println(Vector *stack, Table *funtab, Table *vartab) {
+  UNUSED(funtab);
+  UNUSED(vartab);
   // Find the string size
   size_t stringsize;
   VEC_POP(stack, &stringsize, size_t);
