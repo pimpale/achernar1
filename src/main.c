@@ -6,27 +6,45 @@
 #include "parseable.h"
 #include "parse.h"
 
-int main() {
+int main(int argc, char** argv) {
   Vector stack;
   Table funtab;
   Table vartab;
-  Parseable input;
 
   // Instantiate environment
   initVector(&stack);
   initTable(&funtab);
   initTable(&vartab);
-  // Read from stdin
-  initParseableFile(&input, stdin);
 
   // Populate default function
   initPrelude(&funtab);
 
-  // Parse
-  parse(&input, &stack, &funtab, &vartab);
+  if(argc > 1) {
+    // Parse each file
+    for(int i = 1; i < argc; i++) {
+      Parseable fileParseable;
+      FILE* file = fopen(argv[i], "r");
+      if(file != NULL) {
+        initParseableFile(&fileParseable, file);
+        // Parse
+        parse(&fileParseable, &stack, &funtab, &vartab);
+        freeParseable(&fileParseable);
+      }
+      else {
+        fprintf(stderr, "ERROR: could not open file %s\n", argv[i]);
+      }
+    }
+  }
+  else {
+    // Read from stdin
+    Parseable input;
+    initParseableFile(&input, stdin);
+    // Parse
+    parse(&input, &stack, &funtab, &vartab);
+    freeParseable(&input);
+  }
 
   // Free resources
-  freeParseable(&input);
   freeVector(&stack);
   freeTable(&funtab);
   freeTable(&vartab);

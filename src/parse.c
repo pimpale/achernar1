@@ -25,10 +25,23 @@ static void parseString(Parseable *stream, Vector *stack) {
       c = nextValue(stream);
       if (c == EOF) {
         break;
+      } else if (c == 'n') {
+        *VEC_PUSH(stack, uint8_t) = (uint8_t)'\n';
+      } else if (c == ')') {
+        *VEC_PUSH(stack, uint8_t) = (uint8_t)')';
+      } else if (c == ')') {
+        *VEC_PUSH(stack, uint8_t) = (uint8_t)')';
+      } else if(c == '\\') {
+        *VEC_PUSH(stack, uint8_t) = (uint8_t)'\\';
+      } else {
+        printf("parse: unrecognized character after \\\n");
+        FATAL("SYNTAX ERROR");
       }
+      strlength++;
     } else if (c == '(') {
       depth++;
       *VEC_PUSH(stack, uint8_t) = (uint8_t)c;
+      strlength++;
     } else if (c == ')') {
       depth--;
       if (depth == 0) {
@@ -36,10 +49,11 @@ static void parseString(Parseable *stream, Vector *stack) {
       } else {
         *VEC_PUSH(stack, uint8_t) = (uint8_t)c;
       }
+      strlength++;
     } else {
       *VEC_PUSH(stack, uint8_t) = (uint8_t)c;
+      strlength++;
     }
-    strlength++;
   }
   *VEC_PUSH(stack, uint8_t) = 0;  // signal end
   strlength++;
