@@ -1,0 +1,29 @@
+100
+1 ( # loop
+  # Although the loop counts down, we must count up
+  dupu8
+  100 -u8
+
+  dupu8 3 %u8 0 ==u8 dupu8 5 %u8 0 ==u8 &&u8 #if
+  (
+    (fizz buzz) println
+  )
+  # Else
+  (
+    dupu8 3 %u8 0 ==u8 #if
+    (
+      (fizz) println
+    )
+    # Else
+    (
+      dupu8 5 %u8 0 ==u8 #if
+      (
+        (buzz) println
+      ) () ifelse
+    ) ifelse
+  ) ifelse
+
+  dropu8 # Drop the 100 - version
+  1 -u8  # Subtract 1 from counter
+  dupu8  # Make copy for loop to consume
+) loop

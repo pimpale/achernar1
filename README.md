@@ -56,10 +56,10 @@ world
 ( # Else
   (if not, this will) println
 )
-ifthen
+ifelse
 ```
 
-The ifthen function takes 3 parameters, first a u8 number and two strings to be evaluated. The first string will be evaluated if the number is not equal to zero, and the second string will be evaluated if it was zero. Since strings can be nested, it's not a problem that we have another one inside. In this case, since the 1st parameter of ifthen is 1, the first string is evaluated. This pushes the string "if the following condition is true, this will print" to the stack and then prints it. There is also `eval` in addition to `ifthen` that evaluates unconditionally.
+The ifelse function takes 3 parameters, first a u8 number and two strings to be evaluated. The first string will be evaluated if the number is not equal to zero, and the second string will be evaluated if it was zero. Since strings can be nested, it's not a problem that we have another one inside. In this case, since the 1st parameter of ifelse is 1, the first string is evaluated. This pushes the string "if the following condition is true, this will print" to the stack and then prints it. There is also `eval` in addition to `ifelse` that evaluates unconditionally.
 
 ### math
 ```
@@ -96,12 +96,12 @@ To print a word 10 times:
 Fizzbuzz:
 ```
 100
-(
+1 ( # loop
   # Although the loop counts down, we must count up
   dupu8
   100 -u8
 
-  dupu8 3 %u8 0 ==u8 dupu8 5 %u8 0 ==u8 andu8 #if
+  dupu8 3 %u8 0 ==u8 dupu8 5 %u8 0 ==u8 &&u8 #if
   (
     (fizz buzz) println
   )
@@ -123,5 +123,5 @@ Fizzbuzz:
   dropu8 # Drop the 100 - version
   1 -u8  # Subtract 1 from counter
   dupu8  # Make copy for loop to consume
-)
+) loop
 ```

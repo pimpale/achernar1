@@ -205,7 +205,8 @@ static void putvar(Vector *stack, Table *funtab, Table *vartab) {
   free(name);
 }
 
-// Function manipulation functions ===============================================
+// Function manipulation functions
+// ===============================================
 
 // Pops the data off the stack and into the variable
 // Ex: ((hello) println) (say-hello) mkfun
@@ -275,7 +276,8 @@ static void delfun(Vector *stack, Table *funtab, Table *vartab) {
   }
 }
 
-// Looping and conditionals =====================================================
+// Looping and conditionals
+// =====================================================
 
 // Evaluates the string unconditionally
 // Ex: (1 2 +) eval
@@ -299,9 +301,8 @@ static void eval(Vector *stack, Table *funtab, Table *vartab) {
 }
 
 // Evaluates first if the value is not 0, and the second one if so
-// Ex: 1 ((hello) println) () ifthen
-static void ifthen(Vector *stack, Table *funtab, Table *vartab) {
-
+// Ex: 1 ((hello) println) () ifelse
+static void ifelse(Vector *stack, Table *funtab, Table *vartab) {
   // Find the else size
   size_t elsebodysize;
   VEC_POP(stack, &elsebodysize, size_t);
@@ -316,7 +317,6 @@ static void ifthen(Vector *stack, Table *funtab, Table *vartab) {
   char *ifbody = malloc(ifbodysize);
   popVector(stack, ifbody, ifbodysize);
 
-
   // Pop the value
   uint8_t value;
   VEC_POP(stack, &value, uint8_t);
@@ -325,7 +325,7 @@ static void ifthen(Vector *stack, Table *funtab, Table *vartab) {
   Parseable parseable;
 
   // Select the statement to evaluate
-  if(value != 0) {
+  if (value != 0) {
     // If condition true
     initParseableMemory(&parseable, ifbody, ifbodysize);
   } else {
@@ -404,50 +404,55 @@ static void println(Vector *stack, Table *funtab, Table *vartab) {
 }
 
 /* Function that takes in two args returns one */
-#define DEFINE_ARG2_RET1_NATIVE_FUN(type, identifier, operation1)         \
-  static void identifier##_##type(Vector *stack, Table *funtab, Table *vartab) { \
-    UNUSED(vartab);                                                       \
-    UNUSED(funtab);                                                       \
-    type arg1, arg2, ret1;                                                \
-    popVector(stack, &arg1, sizeof(arg1));                                \
-    popVector(stack, &arg2, sizeof(arg2));                                \
-    ret1 = operation1;                                                    \
-    *((type *)pushVector(stack, sizeof(ret1))) = ret1;                    \
-  }
-
-#define DEFINE_TYPE(type)                                         \
-  /* Define Math Functions */                                     \
-  DEFINE_ARG2_RET1_NATIVE_FUN(type, add, arg2 + arg1)             \
-  DEFINE_ARG2_RET1_NATIVE_FUN(type, sub, arg2 - arg1)             \
-  DEFINE_ARG2_RET1_NATIVE_FUN(type, mul, arg2 *arg1)              \
-  DEFINE_ARG2_RET1_NATIVE_FUN(type, div, arg2 / arg1)             \
-  /* Define dup, drop, and swp */                                 \
-  static void dup_##type(Vector *stack, Table *funtab, Table *vartab) {  \
-    UNUSED(funtab);                                               \
+#define DEFINE_ARG2_RET1_NATIVE_FUN(type, identifier, operation1) \
+  static void identifier##_##type(Vector *stack, Table *funtab,   \
+                                  Table *vartab) {                \
     UNUSED(vartab);                                               \
-    type arg1, ret1, ret2;                                        \
-    popVector(stack, &arg1, sizeof(arg1));                        \
-    ret1 = arg1;                                                  \
-    ret2 = arg1;                                                  \
-    *((type *)pushVector(stack, sizeof(ret1))) = ret1;            \
-    *((type *)pushVector(stack, sizeof(ret2))) = ret2;            \
-  }                                                               \
-  static void drop_##type(Vector *stack, Table *funtab, Table *vartab) { \
     UNUSED(funtab);                                               \
-    UNUSED(vartab);                                               \
-    type arg1;                                                    \
-    popVector(stack, &arg1, sizeof(arg1));                        \
-  }                                                               \
-  static void swp_##type(Vector *stack, Table *funtab, Table *vartab) {  \
-    UNUSED(funtab);                                               \
-    UNUSED(vartab);                                               \
-    type arg1, arg2, ret1, ret2;                                  \
+    type arg1, arg2, ret1;                                        \
     popVector(stack, &arg1, sizeof(arg1));                        \
     popVector(stack, &arg2, sizeof(arg2));                        \
-    ret1 = arg1;                                                  \
-    ret2 = arg2;                                                  \
+    ret1 = operation1;                                            \
     *((type *)pushVector(stack, sizeof(ret1))) = ret1;            \
-    *((type *)pushVector(stack, sizeof(ret2))) = ret2;            \
+  }
+
+#define DEFINE_TYPE(type)                                                \
+  /* Define Math Functions */                                            \
+  DEFINE_ARG2_RET1_NATIVE_FUN(type, add, arg2 + arg1)                    \
+  DEFINE_ARG2_RET1_NATIVE_FUN(type, sub, arg2 - arg1)                    \
+  DEFINE_ARG2_RET1_NATIVE_FUN(type, mul, arg2 *arg1)                     \
+  DEFINE_ARG2_RET1_NATIVE_FUN(type, div, arg2 / arg1)                    \
+  DEFINE_ARG2_RET1_NATIVE_FUN(type, mod, arg2 % arg1)                    \
+  DEFINE_ARG2_RET1_NATIVE_FUN(type, or, arg2 || arg1)                    \
+  DEFINE_ARG2_RET1_NATIVE_FUN(type, and, arg2 &&arg1)                    \
+  DEFINE_ARG2_RET1_NATIVE_FUN(type, equ, arg2 == arg1)                   \
+  /* Define dup, drop, and swp */                                        \
+  static void dup_##type(Vector *stack, Table *funtab, Table *vartab) {  \
+    UNUSED(funtab);                                                      \
+    UNUSED(vartab);                                                      \
+    type arg1, ret1, ret2;                                               \
+    popVector(stack, &arg1, sizeof(arg1));                               \
+    ret1 = arg1;                                                         \
+    ret2 = arg1;                                                         \
+    *((type *)pushVector(stack, sizeof(ret1))) = ret1;                   \
+    *((type *)pushVector(stack, sizeof(ret2))) = ret2;                   \
+  }                                                                      \
+  static void drop_##type(Vector *stack, Table *funtab, Table *vartab) { \
+    UNUSED(funtab);                                                      \
+    UNUSED(vartab);                                                      \
+    type arg1;                                                           \
+    popVector(stack, &arg1, sizeof(arg1));                               \
+  }                                                                      \
+  static void swp_##type(Vector *stack, Table *funtab, Table *vartab) {  \
+    UNUSED(funtab);                                                      \
+    UNUSED(vartab);                                                      \
+    type arg1, arg2, ret1, ret2;                                         \
+    popVector(stack, &arg1, sizeof(arg1));                               \
+    popVector(stack, &arg2, sizeof(arg2));                               \
+    ret1 = arg1;                                                         \
+    ret2 = arg2;                                                         \
+    *((type *)pushVector(stack, sizeof(ret1))) = ret1;                   \
+    *((type *)pushVector(stack, sizeof(ret2))) = ret2;                   \
   }
 
 #define NATIVE_FUNCTION_PUT(funName, stringLiteral)                     \
@@ -464,6 +469,10 @@ static void println(Vector *stack, Table *funtab, Table *vartab) {
     NATIVE_FUNCTION_PUT(sub_##type, "-" #name);     \
     NATIVE_FUNCTION_PUT(mul_##type, "*" #name);     \
     NATIVE_FUNCTION_PUT(div_##type, "/" #name);     \
+    NATIVE_FUNCTION_PUT(mod_##type, "%" #name);     \
+    NATIVE_FUNCTION_PUT(or_##type, "||" #name);     \
+    NATIVE_FUNCTION_PUT(and_##type, "&&" #name);    \
+    NATIVE_FUNCTION_PUT(equ_##type, "==" #name);    \
     NATIVE_FUNCTION_PUT(dup_##type, "dup" #name);   \
     NATIVE_FUNCTION_PUT(drop_##type, "drop" #name); \
     NATIVE_FUNCTION_PUT(swp_##type, "swp" #name);   \
@@ -471,12 +480,10 @@ static void println(Vector *stack, Table *funtab, Table *vartab) {
 
 DEFINE_TYPE(uint8_t)
 DEFINE_TYPE(uint64_t)
-DEFINE_TYPE(double)
 
 void initPrelude(Table *funtab) {
   PUT_TYPE(uint8_t, u8);
   PUT_TYPE(uint64_t, u64);
-  PUT_TYPE(double, f64);
 
   NATIVE_FUNCTION_PUT(mkvar, "mkvar");
   NATIVE_FUNCTION_PUT(delvar, "delvar");
@@ -485,7 +492,7 @@ void initPrelude(Table *funtab) {
   NATIVE_FUNCTION_PUT(mkfun, "mkfun");
   NATIVE_FUNCTION_PUT(delfun, "delfun");
   NATIVE_FUNCTION_PUT(eval, "eval");
-  NATIVE_FUNCTION_PUT(ifthen, "ifthen");
+  NATIVE_FUNCTION_PUT(ifelse, "ifelse");
   NATIVE_FUNCTION_PUT(loop, "loop");
   NATIVE_FUNCTION_PUT(println, "println");
   NATIVE_FUNCTION_PUT(dump, "dump");

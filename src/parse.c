@@ -11,6 +11,7 @@
 #include "vector.h"
 
 static void parseComment(Parseable *stream, Vector *stack) {
+  UNUSED(stack);
   if (nextValue(stream) != '#') {
     FATAL("malformed comment");
   }
