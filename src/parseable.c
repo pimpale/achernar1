@@ -1,8 +1,9 @@
+#include "parseable.h"
+
 #include <stdint.h>
 #include <stdio.h>
 
 #include "constants.h"
-#include "parseable.h"
 
 void initParseableFile(Parseable* parseable, FILE* fp) {
   // TODO seek file to beginning?
@@ -24,11 +25,11 @@ int32_t nextValue(Parseable* p) {
   int32_t nextValue;
   switch (p->backing) {
     case PARSEABLE_BACKING_MEMORY: {
-      if (p->loc + 1>= p->len) {
+      if (p->loc + 1 >= p->len) {
         nextValue = EOF;
       } else {
         // Return the element at the location, and increment location
-        nextValue  = (p->memory[(p->loc)++]);
+        nextValue = (p->memory[(p->loc)++]);
       }
       break;
     }
@@ -41,32 +42,21 @@ int32_t nextValue(Parseable* p) {
   return nextValue;
 }
 
-int32_t peekValue(Parseable* p) {
-  int32_t peekValue;
+void backValue(Parseable* p) {
   switch (p->backing) {
     case PARSEABLE_BACKING_MEMORY: {
-      if (p->loc +1 >= p->len) {
-        peekValue = EOF;
-      } else {
-        // Return the element at the location, and increment location
-        peekValue  = (p->memory[p->loc]);
+      if (p->loc == 0) {
+        p->loc--;
+        return;
       }
-      break;
-    }
-    case PARSEABLE_BACKING_FILE: {
-      int32_t c = getc(p->file);
-      ungetc(c, p->file);
-      p->lastVal = c;
-      peekValue = (p->lastVal);
-      break;
+      case PARSEABLE_BACKING_FILE:
+        ungetc(p->lastVal, p->file);
+        return;
     }
   }
-  return peekValue;
 }
 
-
-
 void freeParseable(Parseable* p) {
-  //do nothing for now
+  // do nothing for now
   UNUSED(p);
 }

@@ -8,11 +8,11 @@ Very small stack based language.
 git submodule update --init --recursive
 make
 ```
-The program has no dependencies, and is made in pure C.
+The program has dependencies on [cvec](https://github.com/pimpale/cvec) and [ctable](https://github.com/pimpale/ctable). They're included as submodules and can be updated from git.
 
 ## Running
 
-This language is based entirely on the stack and file streams. Some examples:
+This language is based entirely on the stack and string. Some examples:
 
 ### hello world
 
@@ -21,13 +21,45 @@ This language is based entirely on the stack and file streams. Some examples:
 ```
 This prints hello world. Instead of `"`, `(` and `)` are used to represent strings, and can be nested. The string is pushed onto the stack character by character, with a leading and terminating null byte. printstr is one of a few built in functions defined in src/functions.c
 
+### comments
+Comments go from a `#` to the end of the line, and can be defined anywhere (even in a string). To include a literal `#` in the string, use a backslash
+```
+(hello
+# This is a comment
+world) println
+```
+This code would print out:
+```
+hello
+world
+```
+However, if we escape the hash, it would be:
+```
+(hello
+\# This is a comment
+world) println
+```
+This results in
+```
+hello
+# This is a comment
+world
+```
 ### if statement
 
 ```
-1 ((if the following condition is true, this will print) println) evalif
+1
+
+( # If
+  (if the following condition is true, this will print) println
+)
+( # Else
+  (if not, this will) println
+)
+ifthen
 ```
 
-The evalif function takes 2 parameters, a string to be evaluated, and a single number. The string will be evaluated if the number is not equal to zero. Since strings can be nested, it's not a problem that we have another one inside. In this case, since the 2nd parameter of evalif is 1, the string previous is evaluated. This pushes the string to the stack and then drops it.
+The ifthen function takes 3 parameters, first a u8 number and two strings to be evaluated. The first string will be evaluated if the number is not equal to zero, and the second string will be evaluated if it was zero. Since strings can be nested, it's not a problem that we have another one inside. In this case, since the 1st parameter of evalif is 1, the first string is evaluated. This pushes the string "if the following condition is true, this will print" to the stack and then prints it. There is also `eval` in addition to `ifthen` that evaluates unconditionally.
 
 ### math
 ```
@@ -56,5 +88,40 @@ To print a word 10 times:
 10
 (
   (a word) println
-  1 -u8 dupu8
+  1 -u8
+  dupu8
 ) loop
+```
+
+Fizzbuzz:
+```
+100
+(
+  # Although the loop counts down, we must count up
+  dupu8
+  100 -u8
+
+  dupu8 3 %u8 0 ==u8 dupu8 5 %u8 0 ==u8 andu8 #if
+  (
+    (fizz buzz) println
+  )
+  # Else
+  (
+    dupu8 3 %u8 0 ==u8 #if
+    (
+      (fizz) println
+    )
+    # Else
+    (
+      dupu8 5 %u8 0 ==u8 #if
+      (
+        (buzz) println
+      ) () ifelse
+    ) ifelse
+  ) ifelse
+
+  dropu8 # Drop the 100 - version
+  1 -u8  # Subtract 1 from counter
+  dupu8  # Make copy for loop to consume
+)
+```

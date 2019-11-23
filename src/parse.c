@@ -10,6 +10,18 @@
 #include "table.h"
 #include "vector.h"
 
+static void parseComment(Parseable *stream, Vector *stack) {
+  if (nextValue(stream) != '#') {
+    FATAL("malformed comment");
+  }
+  int32_t c;
+  while ((c = nextValue(stream)) != EOF) {
+    if (c == '\n') {
+      break;
+    }
+  }
+}
+
 static void parseString(Parseable *stream, Vector *stack) {
   if (nextValue(stream) != '(') {
     FATAL("malformed string literal");
@@ -21,17 +33,23 @@ static void parseString(Parseable *stream, Vector *stack) {
     if (strlength == UINT32_MAX) {
       printf("parse: string length exceeds maximum value\n");
       FATAL("SYNTAX ERROR");
+    } else if (c == '#') {
+      backValue(stream);
+      parseComment(stream, stack);
     } else if (c == '\\') {
+      // Skip the backslash
       c = nextValue(stream);
       if (c == EOF) {
         break;
       } else if (c == 'n') {
         *VEC_PUSH(stack, uint8_t) = (uint8_t)'\n';
+      } else if (c == '(') {
+        *VEC_PUSH(stack, uint8_t) = (uint8_t)'(';
       } else if (c == ')') {
         *VEC_PUSH(stack, uint8_t) = (uint8_t)')';
-      } else if (c == ')') {
-        *VEC_PUSH(stack, uint8_t) = (uint8_t)')';
-      } else if(c == '\\') {
+      } else if (c == '#') {
+        *VEC_PUSH(stack, uint8_t) = (uint8_t)'#';
+      } else if (c == '\\') {
         *VEC_PUSH(stack, uint8_t) = (uint8_t)'\\';
       } else {
         printf("parse: unrecognized character after \\\n");
@@ -110,9 +128,13 @@ static void parseFunction(Parseable *stream, Vector *stack, Table *funtab,
 // Parses stream until end
 void parse(Parseable *stream, Vector *stack, Table *funtab, Table *vartab) {
   int32_t c;
-  while ((c = peekValue(stream)) != EOF) {
+  while ((c = nextValue(stream)) != EOF) {
+    // Unget c for the next function
+    backValue(stream);
     if (isblank(c) || c == '\n') {
       nextValue(stream);
+    } else if (c == '#') {
+      parseComment(stream, stack);
     } else if (c == '(') {
       parseString(stream, stack);
     } else if (isdigit(c)) {

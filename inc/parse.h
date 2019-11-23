@@ -3,9 +3,9 @@
 
 #include <stdio.h>
 
-#include "vector.h"
-#include "table.h"
 #include "parseable.h"
+#include "table.h"
+#include "vector.h"
 
 #define FUNCTION_NAME_MAX 10
 #define NUMERICAL_LITERAL_MAX 10
