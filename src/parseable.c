@@ -45,13 +45,14 @@ int32_t nextValue(Parseable* p) {
 void backValue(Parseable* p) {
   switch (p->backing) {
     case PARSEABLE_BACKING_MEMORY: {
-      if (p->loc == 0) {
+      if (p->loc != 0) {
         p->loc--;
-        return;
       }
-      case PARSEABLE_BACKING_FILE:
-        ungetc(p->lastVal, p->file);
-        return;
+      break;
+    }
+    case PARSEABLE_BACKING_FILE: {
+      ungetc(p->lastVal, p->file);
+      break;
     }
   }
 }

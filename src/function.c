@@ -53,8 +53,8 @@ void freeFunction(Function *fun) {
 
 // Stack
 
-static void hexDump(const char *desc, const void *addr, const int len) {
-  int i;
+static void hexDump(const char *desc, const void *addr, const size_t len) {
+  size_t i;
   unsigned char buff[17];
   const unsigned char *pc = (const unsigned char *)addr;
 
@@ -63,10 +63,6 @@ static void hexDump(const char *desc, const void *addr, const int len) {
 
   if (len == 0) {
     printf("  ZERO LENGTH\n");
-    return;
-  }
-  if (len < 0) {
-    printf("  NEGATIVE LENGTH: %i\n", len);
     return;
   }
 
@@ -79,7 +75,7 @@ static void hexDump(const char *desc, const void *addr, const int len) {
       if (i != 0) printf("  %s\n", buff);
 
       // Output the offset.
-      printf("  %04x ", i);
+      printf("  %04zx ", i);
     }
 
     // Now the hex code for the specific character.
@@ -105,24 +101,18 @@ static void hexDump(const char *desc, const void *addr, const int len) {
 
 // Stack Manipulation
 
-void dump(Vector *stack, Table *funtab, Table *vartab);
-void dump(Vector *stack, Table *funtab, Table *vartab) {
+static void dump(Vector *stack, Table *funtab, Table *vartab) {
   UNUSED(funtab);
   UNUSED(vartab);
   hexDump("stack", getVector(stack, 0), lengthVector(stack));
 }
 
-// Variable manipulation function
-
-void mkvar(Vector *stack, Table *funtab, Table *vartab);
-void delvar(Vector *stack, Table *funtab, Table *vartab);
-void getvar(Vector *stack, Table *funtab, Table *vartab);
-void putvar(Vector *stack, Table *funtab, Table *vartab);
+// Variable manipulation functions ====================================
 
 // Creates a variable that can be used to store things
 // 10 (my-value) mkvar
 // This would create a space of 10 bytes assigned to the name my-value
-void mkvar(Vector *stack, Table *funtab, Table *vartab) {
+static void mkvar(Vector *stack, Table *funtab, Table *vartab) {
   UNUSED(funtab);
 
   // Get the name
@@ -148,7 +138,7 @@ void mkvar(Vector *stack, Table *funtab, Table *vartab) {
 
 // Deletes a variable's space and unassociates the name
 // (my-value) delvar
-void delvar(Vector *stack, Table *funtab, Table *vartab) {
+static void delvar(Vector *stack, Table *funtab, Table *vartab) {
   UNUSED(funtab);
   size_t namesize;
   VEC_POP(stack, &namesize, size_t);
@@ -160,7 +150,7 @@ void delvar(Vector *stack, Table *funtab, Table *vartab) {
 
 // pushes the value of a variable's space onto the stack
 // (my-value) getvar
-void getvar(Vector *stack, Table *funtab, Table *vartab) {
+static void getvar(Vector *stack, Table *funtab, Table *vartab) {
   UNUSED(funtab);
 
   // Get name
@@ -187,7 +177,7 @@ void getvar(Vector *stack, Table *funtab, Table *vartab) {
 // Pops the data off the stack and into the variable
 // Ex: 1 2 + (sum) putvar
 // Thie example would put 3 into sum
-void putvar(Vector *stack, Table *funtab, Table *vartab) {
+static void putvar(Vector *stack, Table *funtab, Table *vartab) {
   UNUSED(funtab);
   // First we find the name of variable
   // Find the name size
@@ -215,13 +205,11 @@ void putvar(Vector *stack, Table *funtab, Table *vartab) {
   free(name);
 }
 
-// Function manipulation function
-void mkfun(Vector *stack, Table *funtab, Table *vartab);
-void delfun(Vector *stack, Table *funtab, Table *vartab);
+// Function manipulation functions ===============================================
 
 // Pops the data off the stack and into the variable
 // Ex: ((hello) println) (say-hello) mkfun
-void mkfun(Vector *stack, Table *funtab, Table *vartab) {
+static void mkfun(Vector *stack, Table *funtab, Table *vartab) {
   UNUSED(vartab);
 
   // First we find the name
@@ -265,7 +253,7 @@ void mkfun(Vector *stack, Table *funtab, Table *vartab) {
 // Deletes a function
 // Ex: (println) delfun
 // This would delete the function println
-void delfun(Vector *stack, Table *funtab, Table *vartab) {
+static void delfun(Vector *stack, Table *funtab, Table *vartab) {
   UNUSED(vartab);
 
   // First we find the name
@@ -287,15 +275,11 @@ void delfun(Vector *stack, Table *funtab, Table *vartab) {
   }
 }
 
-// Looping and conditionals
-void eval(Vector *stack, Table *funtab, Table *vartab);
-void evalif(Vector *stack, Table *funtab, Table *vartab);
-void loop(Vector *stack, Table *funtab, Table *vartab);
-void println(Vector *stack, Table *funtab, Table *vartab);
+// Looping and conditionals =====================================================
 
 // Evaluates the string unconditionally
 // Ex: (1 2 +) eval
-void eval(Vector *stack, Table *funtab, Table *vartab) {
+static void eval(Vector *stack, Table *funtab, Table *vartab) {
   // Find the string size
   size_t stringsize;
   VEC_POP(stack, &stringsize, size_t);
@@ -314,47 +298,64 @@ void eval(Vector *stack, Table *funtab, Table *vartab) {
   free(string);
 }
 
-// Evaluates if the value is not 0
-// Ex: 1 ((hello) println) evalif
-void evalif(Vector *stack, Table *funtab, Table *vartab) {
-  // Find the string size
-  size_t stringsize;
-  VEC_POP(stack, &stringsize, size_t);
-  // Pop the string off of the stack
-  char *string = malloc(stringsize);
-  popVector(stack, string, stringsize);
+// Evaluates first if the value is not 0, and the second one if so
+// Ex: 1 ((hello) println) () ifthen
+static void ifthen(Vector *stack, Table *funtab, Table *vartab) {
+
+  // Find the else size
+  size_t elsebodysize;
+  VEC_POP(stack, &elsebodysize, size_t);
+  // Pop the else off of the stack
+  char *elsebody = malloc(elsebodysize);
+  popVector(stack, elsebody, elsebodysize);
+
+  // Find the if size
+  size_t ifbodysize;
+  VEC_POP(stack, &ifbodysize, size_t);
+  // Pop the if off of the stack
+  char *ifbody = malloc(ifbodysize);
+  popVector(stack, ifbody, ifbodysize);
+
 
   // Pop the value
   uint8_t value;
   VEC_POP(stack, &value, uint8_t);
 
-  // If it's not false
-  if (value != 0) {
-    // Now we make a parseable of the string and parse
-    Parseable parseable;
-    initParseableMemory(&parseable, string, stringsize);
+  // Now we make a parseable of the string and parse
+  Parseable parseable;
 
-    // Parse it in this context
-    parse(&parseable, stack, funtab, vartab);
-    freeParseable(&parseable);
+  // Select the statement to evaluate
+  if(value != 0) {
+    // If condition true
+    initParseableMemory(&parseable, ifbody, ifbodysize);
+  } else {
+    // If condition false
+    initParseableMemory(&parseable, elsebody, elsebodysize);
   }
-  free(string);
+
+  // Parse it in this context
+  parse(&parseable, stack, funtab, vartab);
+  freeParseable(&parseable);
+
+  free(ifbody);
+  free(elsebody);
 }
 
 // Evals until the value on the stack is 0
 // Format: (body to run) (body to check if true) loop
+//
 // Ex:
 //    # Say hello 10 times
 //    10
 //    (
 //      (hello) println
-//      1 -
+//      1 -u8
 //      dupu8
 //    ) loop
 //
 // This example creates a variable with one byte of space, sets it to 10
 // Each loop it decrements and then finishes
-void loop(Vector *stack, Table *funtab, Table *vartab) {
+static void loop(Vector *stack, Table *funtab, Table *vartab) {
   // Get the body
   // Find the body size
   size_t bodysize;
@@ -386,7 +387,7 @@ void loop(Vector *stack, Table *funtab, Table *vartab) {
 // Prints string to standard output
 // Ex: (hello world!) println
 // This example would print "hello world!" to the output, with a newline
-void println(Vector *stack, Table *funtab, Table *vartab) {
+static void println(Vector *stack, Table *funtab, Table *vartab) {
   UNUSED(funtab);
   UNUSED(vartab);
   // Find the string size
@@ -404,8 +405,7 @@ void println(Vector *stack, Table *funtab, Table *vartab) {
 
 /* Function that takes in two args returns one */
 #define DEFINE_ARG2_RET1_NATIVE_FUN(type, identifier, operation1)         \
-  void identifier##_##type(Vector *stack, Table *funtab, Table *vartab);  \
-  void identifier##_##type(Vector *stack, Table *funtab, Table *vartab) { \
+  static void identifier##_##type(Vector *stack, Table *funtab, Table *vartab) { \
     UNUSED(vartab);                                                       \
     UNUSED(funtab);                                                       \
     type arg1, arg2, ret1;                                                \
@@ -422,10 +422,7 @@ void println(Vector *stack, Table *funtab, Table *vartab) {
   DEFINE_ARG2_RET1_NATIVE_FUN(type, mul, arg2 *arg1)              \
   DEFINE_ARG2_RET1_NATIVE_FUN(type, div, arg2 / arg1)             \
   /* Define dup, drop, and swp */                                 \
-  void dup_##type(Vector *stack, Table *funtab, Table *vartab);   \
-  void drop_##type(Vector *stack, Table *funtab, Table *vartab);  \
-  void swp_##type(Vector *stack, Table *funtab, Table *vartab);   \
-  void dup_##type(Vector *stack, Table *funtab, Table *vartab) {  \
+  static void dup_##type(Vector *stack, Table *funtab, Table *vartab) {  \
     UNUSED(funtab);                                               \
     UNUSED(vartab);                                               \
     type arg1, ret1, ret2;                                        \
@@ -435,13 +432,13 @@ void println(Vector *stack, Table *funtab, Table *vartab) {
     *((type *)pushVector(stack, sizeof(ret1))) = ret1;            \
     *((type *)pushVector(stack, sizeof(ret2))) = ret2;            \
   }                                                               \
-  void drop_##type(Vector *stack, Table *funtab, Table *vartab) { \
+  static void drop_##type(Vector *stack, Table *funtab, Table *vartab) { \
     UNUSED(funtab);                                               \
     UNUSED(vartab);                                               \
     type arg1;                                                    \
     popVector(stack, &arg1, sizeof(arg1));                        \
   }                                                               \
-  void swp_##type(Vector *stack, Table *funtab, Table *vartab) {  \
+  static void swp_##type(Vector *stack, Table *funtab, Table *vartab) {  \
     UNUSED(funtab);                                               \
     UNUSED(vartab);                                               \
     type arg1, arg2, ret1, ret2;                                  \
@@ -488,7 +485,7 @@ void initPrelude(Table *funtab) {
   NATIVE_FUNCTION_PUT(mkfun, "mkfun");
   NATIVE_FUNCTION_PUT(delfun, "delfun");
   NATIVE_FUNCTION_PUT(eval, "eval");
-  NATIVE_FUNCTION_PUT(evalif, "evalif");
+  NATIVE_FUNCTION_PUT(ifthen, "ifthen");
   NATIVE_FUNCTION_PUT(loop, "loop");
   NATIVE_FUNCTION_PUT(println, "println");
   NATIVE_FUNCTION_PUT(dump, "dump");

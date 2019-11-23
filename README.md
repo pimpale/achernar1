@@ -59,7 +59,7 @@ world
 ifthen
 ```
 
-The ifthen function takes 3 parameters, first a u8 number and two strings to be evaluated. The first string will be evaluated if the number is not equal to zero, and the second string will be evaluated if it was zero. Since strings can be nested, it's not a problem that we have another one inside. In this case, since the 1st parameter of evalif is 1, the first string is evaluated. This pushes the string "if the following condition is true, this will print" to the stack and then prints it. There is also `eval` in addition to `ifthen` that evaluates unconditionally.
+The ifthen function takes 3 parameters, first a u8 number and two strings to be evaluated. The first string will be evaluated if the number is not equal to zero, and the second string will be evaluated if it was zero. Since strings can be nested, it's not a problem that we have another one inside. In this case, since the 1st parameter of ifthen is 1, the first string is evaluated. This pushes the string "if the following condition is true, this will print" to the stack and then prints it. There is also `eval` in addition to `ifthen` that evaluates unconditionally.
 
 ### math
 ```

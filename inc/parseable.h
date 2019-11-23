@@ -17,17 +17,17 @@ typedef struct {
   FILE* file;
   char* memory;
   size_t len;
-  /* Caches the value of the last char fetched for ungetc */
-  int32_t lastVal;
   /* location in file */
   size_t loc;
+  /* Caches the value of the last char fetched for ungetc */
+  int32_t lastVal;
 } Parseable;
 
 void initParseableFile(Parseable* parseable, FILE* fp);
 void initParseableMemory(Parseable* parseable, char* ptr, size_t len);
 
 int32_t nextValue(Parseable* p);
-int32_t peekValue(Parseable* p);
+void backValue(Parseable* p);
 
 void freeParseable(Parseable* p);
 

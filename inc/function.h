@@ -14,10 +14,10 @@ typedef enum {
 } FunctionType;
 
 typedef struct {
-  FunctionType funType;
   void (*nativeFunPointer)(Vector *, Table *, Table *);
   char *body;
   size_t bodyLength;
+  FunctionType funType;
 } Function;
 
 // Creates the minimal environment required to run this lang
