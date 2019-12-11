@@ -209,7 +209,7 @@ static void putvar(Vector *stack, Table *funtab, Table *vartab) {
 // ===============================================
 
 // Pops the data off the stack and into the variable
-// Ex: ((hello) println) (say-hello) mkfun
+// Ex: ((hello) print) (say-hello) mkfun
 static void mkfun(Vector *stack, Table *funtab, Table *vartab) {
   UNUSED(vartab);
 
@@ -252,8 +252,8 @@ static void mkfun(Vector *stack, Table *funtab, Table *vartab) {
 }
 
 // Deletes a function
-// Ex: (println) delfun
-// This would delete the function println
+// Ex: (print) delfun
+// This would delete the function print
 static void delfun(Vector *stack, Table *funtab, Table *vartab) {
   UNUSED(vartab);
 
@@ -301,7 +301,7 @@ static void eval(Vector *stack, Table *funtab, Table *vartab) {
 }
 
 // Evaluates first if the value is not 0, and the second one if so
-// Ex: 1 ((hello) println) () ifelse
+// Ex: 1 ((hello) print) () ifelse
 static void ifelse(Vector *stack, Table *funtab, Table *vartab) {
   // Find the else size
   size_t elsebodysize;
@@ -348,7 +348,7 @@ static void ifelse(Vector *stack, Table *funtab, Table *vartab) {
 //    # Say hello 10 times
 //    10
 //    (
-//      (hello) println
+//      (hello) print
 //      1 -u8
 //      dupu8
 //    ) loop
@@ -385,9 +385,9 @@ static void loop(Vector *stack, Table *funtab, Table *vartab) {
 }
 
 // Prints string to standard output
-// Ex: (hello world!) println
+// Ex: (hello world!) print
 // This example would print "hello world!" to the output, with a newline
-static void println(Vector *stack, Table *funtab, Table *vartab) {
+static void print(Vector *stack, Table *funtab, Table *vartab) {
   UNUSED(funtab);
   UNUSED(vartab);
   // Find the string size
@@ -398,7 +398,7 @@ static void println(Vector *stack, Table *funtab, Table *vartab) {
   popVector(stack, string, stringsize);
 
   // Print it
-  puts(string);
+  printf("%s", string);
   // Free
   free(string);
 }
@@ -494,6 +494,6 @@ void initPrelude(Table *funtab) {
   NATIVE_FUNCTION_PUT(eval, "eval");
   NATIVE_FUNCTION_PUT(ifelse, "ifelse");
   NATIVE_FUNCTION_PUT(loop, "loop");
-  NATIVE_FUNCTION_PUT(println, "println");
+  NATIVE_FUNCTION_PUT(print, "print");
   NATIVE_FUNCTION_PUT(dump, "dump");
 }

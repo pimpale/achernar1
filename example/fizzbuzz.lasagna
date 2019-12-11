@@ -6,19 +6,19 @@
 
   dupu8 3 %u8 0 ==u8 dupu8 5 %u8 0 ==u8 &&u8 #if
   (
-    (fizz buzz) println
+    (fizz buzz) print
   )
   # Else
   (
     dupu8 3 %u8 0 ==u8 #if
     (
-      (fizz) println
+      (fizz) print
     )
     # Else
     (
       dupu8 5 %u8 0 ==u8 #if
       (
-        (buzz) println
+        (buzz) print
       ) () ifelse
     ) ifelse
   ) ifelse
