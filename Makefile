@@ -7,13 +7,10 @@ SRCS := $(shell find $(SRC_DIRS) -name *.cpp -or -name *.c -or -name *.s)
 OBJS := $(SRCS:%=$(BUILD_DIR)/%.o)
 DEPS := $(OBJS:.o=.d)
 
-INC_DIRS := $(shell find . -type d -name inc)
-INC_FLAGS := $(addprefix -I,$(INC_DIRS))
-
 LDFLAGS := 
 
 CC := clang
-CPPFLAGS ?= $(INC_FLAGS) -std=c11 -MMD -MP -O0 -g3 -Wall -Weverything -pedantic 
+CPPFLAGS ?= -std=c11 -MMD -MP -O0 -g3 -Wall -Weverything -pedantic 
 # CC := tcc
 # CPPFLAGS ?= $(INC_FLAGS) -Wall -Wpedantic 
 # CC := gcc

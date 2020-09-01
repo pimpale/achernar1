@@ -12,13 +12,15 @@
   (
     dupu8 3 %u8 0 ==u8 #if
     (
-      (fizz) print
+      (fizz
+) print
     )
     # Else
     (
       dupu8 5 %u8 0 ==u8 #if
       (
-        (buzz) print
+        (buzz
+) print
       ) () ifelse
     ) ifelse
   ) ifelse

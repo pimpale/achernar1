@@ -1,0 +1,142 @@
+[
+    {
+        "arguments": [
+            "clang",
+            "-c",
+            "-I./ext/cvec/inc",
+            "-I./ext/ctable/inc",
+            "-I./inc",
+            "-std=c11",
+            "-O0",
+            "-g3",
+            "-Wall",
+            "-Weverything",
+            "-pedantic",
+            "-o",
+            "obj/./src/function.c.o",
+            "src/function.c"
+        ],
+        "directory": "/home/fidgetsinner/workspace/lasagna",
+        "file": "src/function.c"
+    },
+    {
+        "arguments": [
+            "clang",
+            "-c",
+            "-I./ext/cvec/inc",
+            "-I./ext/ctable/inc",
+            "-I./inc",
+            "-std=c11",
+            "-O0",
+            "-g3",
+            "-Wall",
+            "-Weverything",
+            "-pedantic",
+            "-o",
+            "obj/./src/parseable.c.o",
+            "src/parseable.c"
+        ],
+        "directory": "/home/fidgetsinner/workspace/lasagna",
+        "file": "src/parseable.c"
+    },
+    {
+        "arguments": [
+            "clang",
+            "-c",
+            "-I./ext/cvec/inc",
+            "-I./ext/ctable/inc",
+            "-I./inc",
+            "-std=c11",
+            "-O0",
+            "-g3",
+            "-Wall",
+            "-Weverything",
+            "-pedantic",
+            "-o",
+            "obj/./ext/ctable/src/hash.c.o",
+            "ext/ctable/src/hash.c"
+        ],
+        "directory": "/home/fidgetsinner/workspace/lasagna",
+        "file": "ext/ctable/src/hash.c"
+    },
+    {
+        "arguments": [
+            "clang",
+            "-c",
+            "-I./ext/cvec/inc",
+            "-I./ext/ctable/inc",
+            "-I./inc",
+            "-std=c11",
+            "-O0",
+            "-g3",
+            "-Wall",
+            "-Weverything",
+            "-pedantic",
+            "-o",
+            "obj/./src/main.c.o",
+            "src/main.c"
+        ],
+        "directory": "/home/fidgetsinner/workspace/lasagna",
+        "file": "src/main.c"
+    },
+    {
+        "arguments": [
+            "clang",
+            "-c",
+            "-I./ext/cvec/inc",
+            "-I./ext/ctable/inc",
+            "-I./inc",
+            "-std=c11",
+            "-O0",
+            "-g3",
+            "-Wall",
+            "-Weverything",
+            "-pedantic",
+            "-o",
+            "obj/./ext/ctable/src/table.c.o",
+            "ext/ctable/src/table.c"
+        ],
+        "directory": "/home/fidgetsinner/workspace/lasagna",
+        "file": "ext/ctable/src/table.c"
+    },
+    {
+        "arguments": [
+            "clang",
+            "-c",
+            "-I./ext/cvec/inc",
+            "-I./ext/ctable/inc",
+            "-I./inc",
+            "-std=c11",
+            "-O0",
+            "-g3",
+            "-Wall",
+            "-Weverything",
+            "-pedantic",
+            "-o",
+            "obj/./src/parse.c.o",
+            "src/parse.c"
+        ],
+        "directory": "/home/fidgetsinner/workspace/lasagna",
+        "file": "src/parse.c"
+    },
+    {
+        "arguments": [
+            "clang",
+            "-c",
+            "-I./ext/cvec/inc",
+            "-I./ext/ctable/inc",
+            "-I./inc",
+            "-std=c11",
+            "-O0",
+            "-g3",
+            "-Wall",
+            "-Weverything",
+            "-pedantic",
+            "-o",
+            "obj/./ext/cvec/src/vector.c.o",
+            "ext/cvec/src/vector.c"
+        ],
+        "directory": "/home/fidgetsinner/workspace/lasagna",
+        "file": "ext/cvec/src/vector.c"
+    }
+]
