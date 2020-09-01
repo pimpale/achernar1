@@ -1,4 +1,4 @@
-TARGET_EXEC ?= lasagna
+TARGET_EXEC ?= achernar
 
 BUILD_DIR ?= ./obj
 SRC_DIRS ?= $(shell find . -type d -name src)
