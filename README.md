@@ -2,6 +2,8 @@
 
 Very small stack based language.
 
+![LASAGNA.JPEG](/res/lasagna.png)
+
 ## Compiling
 
 ```
