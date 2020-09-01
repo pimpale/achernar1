@@ -1,4 +1,4 @@
-TARGET_EXEC ?= achernar
+TARGET_EXEC ?= exe
 
 BUILD_DIR ?= ./obj
 SRC_DIRS ?= $(shell find . -type d -name src)

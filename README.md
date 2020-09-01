@@ -1,4 +1,4 @@
-# achernar
+# Lasagna
 
 Very small stack based language.
 
