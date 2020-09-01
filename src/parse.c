@@ -102,8 +102,7 @@ static void parseNumber(Parseable *stream, Vector *stack) {
   *VEC_PUSH(stack, uint8_t) = (uint8_t)num;
 }
 
-static void parseFunction(Parseable *stream, Vector *stack, Table *funtab,
-                          Table *vartab) {
+static void parseFunction(Parseable *stream, Vector *stack, Table *funtab) {
   char functionBuf[FUNCTION_NAME_MAX + 1];
   size_t len = 0;
   int32_t c;
@@ -123,11 +122,11 @@ static void parseFunction(Parseable *stream, Vector *stack, Table *funtab,
     FATAL("SYNTAX ERROR");
   }
   getTable(funtab, functionBuf, len + 1, &fun, sizeof(Function));
-  executeFunction(&fun, stack, funtab, vartab);
+  executeFunction(&fun, stack, funtab);
 }
 
 // Parses stream until end
-void parse(Parseable *stream, Vector *stack, Table *funtab, Table *vartab) {
+void parse(Parseable *stream, Vector *stack, Table *funtab) {
   int32_t c;
   while ((c = nextValue(stream)) != EOF) {
     // Unget c for the next function
@@ -141,7 +140,7 @@ void parse(Parseable *stream, Vector *stack, Table *funtab, Table *vartab) {
     } else if (isdigit(c)) {
       parseNumber(stream, stack);
     } else {
-      parseFunction(stream, stack, funtab, vartab);
+      parseFunction(stream, stack, funtab);
     }
   }
 }

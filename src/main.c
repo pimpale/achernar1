@@ -9,12 +9,10 @@
 int main(int argc, char** argv) {
   Vector stack;
   Table funtab;
-  Table vartab;
 
   // Instantiate environment
   initVector(&stack);
   initTable(&funtab);
-  initTable(&vartab);
 
   // Populate default function
   initPrelude(&funtab);
@@ -27,7 +25,7 @@ int main(int argc, char** argv) {
       if (file != NULL) {
         initParseableFile(&fileParseable, file);
         // Parse
-        parse(&fileParseable, &stack, &funtab, &vartab);
+        parse(&fileParseable, &stack, &funtab);
         freeParseable(&fileParseable);
       } else {
         fprintf(stderr, "ERROR: could not open file %s\n", argv[i]);
@@ -38,12 +36,11 @@ int main(int argc, char** argv) {
     Parseable input;
     initParseableFile(&input, stdin);
     // Parse
-    parse(&input, &stack, &funtab, &vartab);
+    parse(&input, &stack, &funtab);
     freeParseable(&input);
   }
 
   // Free resources
   freeVector(&stack);
   freeTable(&funtab);
-  freeTable(&vartab);
 }

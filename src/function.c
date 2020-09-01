@@ -13,7 +13,7 @@
 #include "vector.h"
 
 void initNativeFunction(Function *fun,
-                        void (*funPtr)(Vector *, Table *, Table *)) {
+                        void (*funPtr)(Vector *, Table *)) {
   fun->funType = FUNCTION_TYPE_NATIVE;
   fun->nativeFunPointer = funPtr;
   fun->body = NULL;
@@ -24,21 +24,20 @@ void initForthFunction(Function *fun, char *body) {
   fun->funType = FUNCTION_TYPE_FORTH;
   fun->bodyLength = strlen(body) + 1;
   fun->body = malloc(fun->bodyLength);
-  strcpy(body, fun->body);
+  memcpy(fun->body, body, fun->bodyLength);
   fun->nativeFunPointer = NULL;
 }
 
-void executeFunction(Function *fun, Vector *stack, Table *funtab,
-                     Table *vartab) {
+void executeFunction(Function *fun, Vector *stack, Table *funtab) {
   switch (fun->funType) {
     case FUNCTION_TYPE_NATIVE: {
-      fun->nativeFunPointer(stack, funtab, vartab);
+      fun->nativeFunPointer(stack, funtab);
       break;
     }
     case FUNCTION_TYPE_FORTH: {
       Parseable bodyParser;
       initParseableMemory(&bodyParser, fun->body, fun->bodyLength);
-      parse(&bodyParser, stack, funtab, vartab);
+      parse(&bodyParser, stack, funtab);
       freeParseable(&bodyParser);
       break;
     }
@@ -101,108 +100,9 @@ static void hexDump(const char *desc, const void *addr, const size_t len) {
 
 // Stack Manipulation
 
-static void dump(Vector *stack, Table *funtab, Table *vartab) {
+static void dump(Vector *stack, Table *funtab) {
   UNUSED(funtab);
-  UNUSED(vartab);
   hexDump("stack", getVector(stack, 0), lengthVector(stack));
-}
-
-// Variable manipulation functions ====================================
-
-// Creates a variable that can be used to store things
-// 10 (my-value) mkvar
-// This would create a space of 10 bytes assigned to the name my-value
-static void mkvar(Vector *stack, Table *funtab, Table *vartab) {
-  UNUSED(funtab);
-
-  // Get the name
-  size_t namesize;
-  VEC_POP(stack, &namesize, size_t);
-  char *name = malloc(namesize);
-  popVector(stack, name, namesize);
-
-  // Allocate space for the variable
-  uint8_t varsize;
-  VEC_POP(stack, &varsize, uint8_t);
-  char *vardata = malloc(varsize);
-
-  // If a variable with this name already exists, we must free it
-  if (getValueLengthTable(vartab, name, namesize) != 0) {
-    delTable(vartab, name, namesize);
-  }
-
-  putTable(vartab, name, namesize, vardata, varsize);
-  free(name);
-  free(vardata);
-}
-
-// Deletes a variable's space and unassociates the name
-// (my-value) delvar
-static void delvar(Vector *stack, Table *funtab, Table *vartab) {
-  UNUSED(funtab);
-  size_t namesize;
-  VEC_POP(stack, &namesize, size_t);
-  char *name = malloc(namesize);
-  popVector(stack, name, namesize);
-  delTable(vartab, name, namesize);
-  free(name);
-}
-
-// pushes the value of a variable's space onto the stack
-// (my-value) getvar
-static void getvar(Vector *stack, Table *funtab, Table *vartab) {
-  UNUSED(funtab);
-
-  // Get name
-  size_t namesize;
-  VEC_POP(stack, &namesize, size_t);
-  char *name = malloc(namesize);
-  popVector(stack, name, namesize);
-
-  // Get size of variable
-  size_t varsize = getValueLengthTable(vartab, name, namesize);
-
-  if (varsize == 0) {
-    printf("function: getvar: variable name `%s` not defined\n", name);
-    FATAL("FUNCTION USAGE ERROR");
-  }
-
-  // We push the value of the variable to the vector
-  getTable(vartab, name, namesize, pushVector(stack, varsize), varsize);
-
-  // Now free the name
-  free(name);
-}
-
-// Pops the data off the stack and into the variable
-// Ex: 1 2 + (sum) putvar
-// Thie example would put 3 into sum
-static void putvar(Vector *stack, Table *funtab, Table *vartab) {
-  UNUSED(funtab);
-  // First we find the name of variable
-  // Find the name size
-  size_t namesize;
-  VEC_POP(stack, &namesize, size_t);
-  // Pop the name off of the stack
-  char *name = malloc(namesize);
-  popVector(stack, name, namesize);
-
-  // Then we check size of this variable
-  size_t varsize = getValueLengthTable(vartab, name, namesize);
-
-  if (varsize == 0) {
-    printf("function: putvar: variable name `%s` not defined\n", name);
-    FATAL("FUNCTION USAGE ERROR");
-  }
-
-  // Now we pop however many bytes of the thing from the vector to the table
-  uint8_t *vardata = getVector(stack, lengthVector(stack) - varsize);
-  putTable(vartab, name, namesize, vardata, varsize);
-  // Now we delete from the stack
-  popVector(stack, NULL, varsize);
-
-  // free
-  free(name);
 }
 
 // Function manipulation functions
@@ -210,8 +110,7 @@ static void putvar(Vector *stack, Table *funtab, Table *vartab) {
 
 // Pops the data off the stack and into the variable
 // Ex: ((hello) print) (say-hello) mkfun
-static void mkfun(Vector *stack, Table *funtab, Table *vartab) {
-  UNUSED(vartab);
+static void mkfun(Vector *stack, Table *funtab) {
 
   // First we find the name
   // Find the name size
@@ -254,8 +153,7 @@ static void mkfun(Vector *stack, Table *funtab, Table *vartab) {
 // Deletes a function
 // Ex: (print) delfun
 // This would delete the function print
-static void delfun(Vector *stack, Table *funtab, Table *vartab) {
-  UNUSED(vartab);
+static void delfun(Vector *stack, Table *funtab) {
 
   // First we find the name
   // Find the name size
@@ -281,7 +179,7 @@ static void delfun(Vector *stack, Table *funtab, Table *vartab) {
 
 // Evaluates the string unconditionally
 // Ex: (1 2 +) eval
-static void eval(Vector *stack, Table *funtab, Table *vartab) {
+static void eval(Vector *stack, Table *funtab) {
   // Find the string size
   size_t stringsize;
   VEC_POP(stack, &stringsize, size_t);
@@ -294,7 +192,7 @@ static void eval(Vector *stack, Table *funtab, Table *vartab) {
   initParseableMemory(&parseable, string, stringsize);
 
   // Parse it in this context
-  parse(&parseable, stack, funtab, vartab);
+  parse(&parseable, stack, funtab);
 
   freeParseable(&parseable);
   free(string);
@@ -302,7 +200,7 @@ static void eval(Vector *stack, Table *funtab, Table *vartab) {
 
 // Evaluates first if the value is not 0, and the second one if so
 // Ex: 1 ((hello) print) () ifelse
-static void ifelse(Vector *stack, Table *funtab, Table *vartab) {
+static void ifelse(Vector *stack, Table *funtab) {
   // Find the else size
   size_t elsebodysize;
   VEC_POP(stack, &elsebodysize, size_t);
@@ -334,7 +232,7 @@ static void ifelse(Vector *stack, Table *funtab, Table *vartab) {
   }
 
   // Parse it in this context
-  parse(&parseable, stack, funtab, vartab);
+  parse(&parseable, stack, funtab);
   freeParseable(&parseable);
 
   free(ifbody);
@@ -355,7 +253,7 @@ static void ifelse(Vector *stack, Table *funtab, Table *vartab) {
 //
 // This example creates a variable with one byte of space, sets it to 10
 // Each loop it decrements and then finishes
-static void loop(Vector *stack, Table *funtab, Table *vartab) {
+static void loop(Vector *stack, Table *funtab) {
   // Get the body
   // Find the body size
   size_t bodysize;
@@ -377,7 +275,7 @@ static void loop(Vector *stack, Table *funtab, Table *vartab) {
     Parseable bodyParseable;
     initParseableMemory(&bodyParseable, body, bodysize);
     // Parse it in this context
-    parse(&bodyParseable, stack, funtab, vartab);
+    parse(&bodyParseable, stack, funtab);
     freeParseable(&bodyParseable);
   }
 
@@ -387,9 +285,8 @@ static void loop(Vector *stack, Table *funtab, Table *vartab) {
 // Prints string to standard output
 // Ex: (hello world!) print
 // This example would print "hello world!" to the output, with a newline
-static void print(Vector *stack, Table *funtab, Table *vartab) {
+static void print(Vector *stack, Table *funtab) {
   UNUSED(funtab);
-  UNUSED(vartab);
   // Find the string size
   size_t stringsize;
   VEC_POP(stack, &stringsize, size_t);
@@ -405,9 +302,7 @@ static void print(Vector *stack, Table *funtab, Table *vartab) {
 
 /* Function that takes in two args returns one */
 #define DEFINE_ARG2_RET1_NATIVE_FUN(type, identifier, operation1) \
-  static void identifier##_##type(Vector *stack, Table *funtab,   \
-                                  Table *vartab) {                \
-    UNUSED(vartab);                                               \
+  static void identifier##_##type(Vector *stack, Table *funtab) {                \
     UNUSED(funtab);                                               \
     type arg1, arg2, ret1;                                        \
     popVector(stack, &arg1, sizeof(arg1));                        \
@@ -427,9 +322,8 @@ static void print(Vector *stack, Table *funtab, Table *vartab) {
   DEFINE_ARG2_RET1_NATIVE_FUN(type, and, arg2 &&arg1)                    \
   DEFINE_ARG2_RET1_NATIVE_FUN(type, equ, arg2 == arg1)                   \
   /* Define dup, drop, and swp */                                        \
-  static void dup_##type(Vector *stack, Table *funtab, Table *vartab) {  \
+  static void dup_##type(Vector *stack, Table *funtab) {  \
     UNUSED(funtab);                                                      \
-    UNUSED(vartab);                                                      \
     type arg1, ret1, ret2;                                               \
     popVector(stack, &arg1, sizeof(arg1));                               \
     ret1 = arg1;                                                         \
@@ -437,15 +331,13 @@ static void print(Vector *stack, Table *funtab, Table *vartab) {
     *((type *)pushVector(stack, sizeof(ret1))) = ret1;                   \
     *((type *)pushVector(stack, sizeof(ret2))) = ret2;                   \
   }                                                                      \
-  static void drop_##type(Vector *stack, Table *funtab, Table *vartab) { \
+  static void drop_##type(Vector *stack, Table *funtab) { \
     UNUSED(funtab);                                                      \
-    UNUSED(vartab);                                                      \
     type arg1;                                                           \
     popVector(stack, &arg1, sizeof(arg1));                               \
   }                                                                      \
-  static void swp_##type(Vector *stack, Table *funtab, Table *vartab) {  \
+  static void swp_##type(Vector *stack, Table *funtab) {  \
     UNUSED(funtab);                                                      \
-    UNUSED(vartab);                                                      \
     type arg1, arg2, ret1, ret2;                                         \
     popVector(stack, &arg1, sizeof(arg1));                               \
     popVector(stack, &arg2, sizeof(arg2));                               \
@@ -485,10 +377,6 @@ void initPrelude(Table *funtab) {
   PUT_TYPE(uint8_t, u8);
   PUT_TYPE(uint64_t, u64);
 
-  NATIVE_FUNCTION_PUT(mkvar, "mkvar");
-  NATIVE_FUNCTION_PUT(delvar, "delvar");
-  NATIVE_FUNCTION_PUT(getvar, "getvar");
-  NATIVE_FUNCTION_PUT(putvar, "putvar");
   NATIVE_FUNCTION_PUT(mkfun, "mkfun");
   NATIVE_FUNCTION_PUT(delfun, "delfun");
   NATIVE_FUNCTION_PUT(eval, "eval");

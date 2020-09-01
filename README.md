@@ -5,10 +5,8 @@ Very small stack based language.
 ## Compiling
 
 ```
-git submodule update --init --recursive
 make
 ```
-The program has dependencies on [cvec](https://github.com/pimpale/cvec) and [ctable](https://github.com/pimpale/ctable). They're included as submodules and can be updated from git.
 
 ## Running
 
