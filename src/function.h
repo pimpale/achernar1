@@ -24,8 +24,7 @@ typedef struct {
 void initPrelude(Table *funtab);
 
 // Function creation
-void initNativeFunction(Function *fun,
-                        void (*funPtr)(Vector *, Table *));
+void initNativeFunction(Function *fun, void (*funPtr)(Vector *, Table *));
 void initForthFunction(Function *fun, char *body);
 // Run function
 void executeFunction(Function *fun, Vector *stack, Table *funtab);

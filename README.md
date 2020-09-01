@@ -125,18 +125,3 @@ Fizzbuzz:
   dupu8  # Make copy for loop to consume
 ) loop
 ```
-
-### Functions
-
-You can create functions that call code later. To create  a function, you can write
-```
-((print) hello) (say-hello) mkfun
-```
-To call your new function, you can simply call it like any other function:
-```
-say-hello
-```
-This will say hello just as if you had typed in 
-```
-(hello) print
-```
