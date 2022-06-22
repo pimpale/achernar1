@@ -286,7 +286,7 @@ static void loop(Vector *stack, Table *funtab) {
 
 // Prints string to standard output
 // Ex: (hello world!) print
-// This example would print "hello world!" to the output, with a newline
+// This example would print "hello world!" to the output, without a newline
 static void print(Vector *stack, Table *funtab) {
   UNUSED(funtab);
   // Find the string size
@@ -295,12 +295,29 @@ static void print(Vector *stack, Table *funtab) {
   // Pop the string off of the stack
   char *string = malloc(stringsize);
   popVector(stack, string, stringsize);
-
   // Print it
   printf("%s", string);
   // Free
   free(string);
 }
+
+// Prints string to standard output
+// Ex: (hello world!) println
+// This example would print "hello world!" to the output, with a newline
+static void println(Vector *stack, Table *funtab) {
+  UNUSED(funtab);
+  // Find the string size
+  size_t stringsize;
+  VEC_POP(stack, &stringsize, size_t);
+  // Pop the string off of the stack
+  char *string = malloc(stringsize);
+  popVector(stack, string, stringsize);
+  // Print it
+  printf("%s\n", string);
+  // Free
+  free(string);
+}
+
 
 /* Function that takes in two args returns one */
 #define DEFINE_ARG2_RET1_NATIVE_FUN(type, identifier, operation1) \
@@ -385,5 +402,6 @@ void initPrelude(Table *funtab) {
   NATIVE_FUNCTION_PUT(ifelse, "ifelse");
   NATIVE_FUNCTION_PUT(loop, "loop");
   NATIVE_FUNCTION_PUT(print, "print");
+  NATIVE_FUNCTION_PUT(println, "println");
   NATIVE_FUNCTION_PUT(dump, "dump");
 }

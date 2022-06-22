@@ -12,8 +12,6 @@ typedef enum {
 /* Do not manually modify any of these values  */
 
 typedef struct {
-  /* The backing data structure */
-  ParseableBacking backing;
   FILE* file;
   char* memory;
   size_t len;
@@ -21,6 +19,8 @@ typedef struct {
   size_t loc;
   /* Caches the value of the last char fetched for ungetc */
   int32_t lastVal;
+  /* The backing data structure */
+  ParseableBacking backing;
 } Parseable;
 
 void initParseableFile(Parseable* parseable, FILE* fp);
