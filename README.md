@@ -4,6 +4,8 @@ Very small stack based language.
 
 ![LASAGNA.JPEG](/res/lasagna.png)
 
+Read more here: https://pimpale.github.io/lasagna.html
+
 ## Compiling
 
 ```
